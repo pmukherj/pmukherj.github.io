@@ -3,15 +3,24 @@
 <html>
      <title>AR Library</title>
 
+     <script type="module"
+  		src="https://unpkg.com/@google/model-viewer@0.3.1/dist/model-viewer.js">
+	</script>
+
     <body>
     	<h1>Welcome to the AR Library</h1>
     	<p>Welcome to the AR Library website<p>
 
 
-    	<a href="cupandsaucer.usdz" rel="ar">
+    	<!--a href="cupandsaucer.usdz" rel="ar">
     		<img src="cupandsaucer.png" width=200>
-		</a>
+		</a-->
 
+		<model-viewer alt="A 3D model of an astronaut." src="cupandsaucer.gltf" ios-src="cupandsaucer.usdz" magic-leap ar>
+			<img src="cupandsaucer.png" width=200>
+		</model-viewer>
+
+		
    	</body>
 
 </html>
