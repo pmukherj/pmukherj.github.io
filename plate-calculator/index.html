@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🏋️ Plate Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: #111; color: #f1f1f1; font-family: system-ui, sans-serif; display: flex; justify-content: center; padding: 40px 16px; }
+  .wrap { width: 100%; max-width: 480px; }
+  h1 { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+  .sub { color: #aaa; font-size: 14px; margin-bottom: 28px; }
+  .card { background: #1e1e1e; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  label { font-size: 13px; color: #aaa; display: block; margin-bottom: 6px; letter-spacing: .05em; }
+  input[type=number] { width: 100%; background: #2a2a2a; border: 2px solid #333; border-radius: 8px; padding: 12px 14px; font-size: 28px; color: #fff; outline: none; font-weight: bold; }
+  input[type=number]:focus { border-color: #e63946; }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  #kg-label { color: #aaa; font-size: 13px; margin-top: 6px; min-height: 20px; }
+  .bar-btns { display: flex; gap: 10px; }
+  .bar-btn { flex: 1; padding: 10px 0; border-radius: 8px; border: none; cursor: pointer; background: #2a2a2a; color: #aaa; font-weight: bold; font-size: 15px; transition: background .15s, color .15s; }
+  .bar-btn.active { background: #e63946; color: white; }
+  #result { display: none; }
+  .visual { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 16px 0; flex-wrap: wrap; }
+  .plate { border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; writing-mode: vertical-rl; flex-shrink: 0; }
+  .bar-center { background: #888; border-radius: 6px; height: 18px; width: 80px; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold; flex-shrink: 0; }
+  .breakdown { margin-bottom: 14px; }
+  .breakdown-title { font-size: 13px; color: #aaa; margin-bottom: 8px; }
+  .plate-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  .plate-label { font-size: 16px; font-weight: 600; }
+  .plate-sub { color: #666; font-size: 13px; }
+  .totals { background: #2a2a2a; border-radius: 10px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .total-loaded .val { font-size: 28px; font-weight: 800; color: #e63946; }
+  .total-loaded .sub2 { color: #888; font-size: 12px; }
+  .total-target { text-align: right; }
+  .total-target .lbl { color: #aaa; font-size: 12px; }
+  .total-target .val { font-size: 20px; font-weight: 700; }
+  .total-target .sub2 { color: #888; font-size: 12px; }
+  .warning { margin-top: 10px; color: #ffb703; font-size: 13px; text-align: center; }
+  .error { color: #e63946; text-align: center; padding: 20px; }
+  .divider { border-top: 1px solid #2a2a2a; padding-top: 16px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🏋️ Plate Calculator</h1>
+  <p class="sub">Enter your target weight in lbs — get the exact plates to load.</p>
+
+  <div class="card">
+    <label>TARGET WEIGHT (lbs)</label>
+    <input type="number" id="lbs-input" placeholder="e.g. 95" min="0" step="any"/>
+    <div id="kg-label"></div>
+  </div>
+
+  <div class="card">
+    <label>BAR WEIGHT</label>
+    <div class="bar-btns">
+      <button class="bar-btn active" data-bar="20">20kg</button>
+      <button class="bar-btn" data-bar="15">15kg</button>
+      <button class="bar-btn" data-bar="10">10kg</button>
+    </div>
+  </div>
+
+  <div class="card" id="result"></div>
+</div>
+
+<script>
+  const PLATES = [20, 15, 10, 5, 2.5, 1.25];
+  const COLORS = { 20: {bg:'#e63946',text:'white'}, 15: {bg:'#ffb703',text:'#111'}, 10: {bg:'#2196F3',text:'white'}, 5: {bg:'#4caf50',text:'white'}, 2.5: {bg:'#9c27b0',text:'white'}, 1.25: {bg:'#78909c',text:'white'} };
+
+  let barKg = 20;
+
+  const lbsInput = document.getElementById('lbs-input');
+  const kgLabel = document.getElementById('kg-label');
+  const resultEl = document.getElementById('result');
+
+  document.querySelectorAll('.bar-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.bar-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      barKg = parseFloat(btn.dataset.bar);
+      render();
+    });
+  });
+
+  lbsInput.addEventListener('input', render);
+
+  function calcPlates(targetKg, bar) {
+    const remaining = targetKg - bar;
+    if (remaining < 0) return null;
+    let left = remaining / 2;
+    const plates = [];
+    for (const p of PLATES) {
+      const count = Math.floor(left / p + 1e-9);
+      if (count > 0) { plates.push({weight: p, count}); left -= count * p; }
+    }
+    const perSide = plates.reduce((s, p) => s + p.weight * p.count, 0);
+    return { plates, totalLoaded: bar + perSide * 2 };
+  }
+
+  function plateEl(w, color) {
+    const h = 40 + w * 2.2;
+    const width = w >= 10 ? 28 : w >= 5 ? 22 : 16;
+    const el = document.createElement('div');
+    el.className = 'plate';
+    el.style.cssText = `background:${color.bg};color:${color.text};width:${width}px;height:${h}px;`;
+    el.textContent = w;
+    return el;
+  }
+
+  function render() {
+    const raw = lbsInput.value;
+    if (!raw || parseFloat(raw) <= 0) {
+      kgLabel.textContent = '';
+      resultEl.style.display = 'none';
+      return;
+    }
+    const lbs = parseFloat(raw);
+    const targetKg = +(lbs / 2.20462).toFixed(2);
+    kgLabel.textContent = `= ${targetKg} kg`;
+
+    const res = calcPlates(targetKg, barKg);
+    resultEl.style.display = 'block';
+
+    if (!res) {
+      resultEl.innerHTML = `<div class="error">Target weight is less than the bar (${barKg}kg / ${(barKg*2.20462).toFixed(1)}lbs)</div>`;
+      return;
+    }
+
+    // Visual
+    const visual = document.createElement('div');
+    visual.className = 'visual';
+    const expanded = res.plates.flatMap(p => Array(p.count).fill(p.weight));
+    [...expanded].reverse().forEach(w => visual.appendChild(plateEl(w, COLORS[w])));
+    const barCenter = document.createElement('div');
+    barCenter.className = 'bar-center';
+    barCenter.textContent = `BAR ${barKg}kg`;
+    visual.appendChild(barCenter);
+    expanded.forEach(w => visual.appendChild(plateEl(w, COLORS[w])));
+
+    // Breakdown
+    const breakdown = document.createElement('div');
+    breakdown.className = 'divider';
+    const bdTitle = document.createElement('div');
+    bdTitle.className = 'breakdown';
+    bdTitle.innerHTML = `<div class="breakdown-title">PLATES PER SIDE</div>`;
+    if (res.plates.length === 0) {
+      bdTitle.innerHTML += `<div style="color:#888">None — just the bar</div>`;
+    } else {
+      res.plates.forEach(({weight, count}) => {
+        bdTitle.innerHTML += `
+          <div class="plate-row">
+            <div class="dot" style="background:${COLORS[weight].bg}"></div>
+            <span class="plate-label">${count}× ${weight}kg</span>
+            <span class="plate-sub">= ${(count*weight).toFixed(2)}kg/side</span>
+          </div>`;
+      });
+    }
+    breakdown.appendChild(bdTitle);
+
+    // Totals
+    const totals = document.createElement('div');
+    totals.className = 'totals';
+    totals.innerHTML = `
+      <div class="total-loaded">
+        <div style="color:#aaa;font-size:12px">TOTAL LOADED</div>
+        <div class="val">${res.totalLoaded.toFixed(2)} kg</div>
+        <div class="sub2">${(res.totalLoaded * 2.20462).toFixed(1)} lbs</div>
+      </div>
+      <div class="total-target">
+        <div class="lbl">TARGET</div>
+        <div class="val">${targetKg} kg</div>
+        <div class="sub2">${lbs} lbs</div>
+      </div>`;
+    breakdown.appendChild(totals);
+
+    const diff = +(res.totalLoaded - targetKg).toFixed(2);
+    if (Math.abs(diff) > 0.01) {
+      const warn = document.createElement('div');
+      warn.className = 'warning';
+      warn.textContent = `⚠️ Closest possible: ${diff > 0 ? '+' : ''}${diff}kg off target`;
+      breakdown.appendChild(warn);
+    }
+
+    resultEl.innerHTML = '';
+    resultEl.appendChild(visual);
+    resultEl.appendChild(breakdown);
+  }
+</script>
+</body>
+</html>
