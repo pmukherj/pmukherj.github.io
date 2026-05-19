@@ -34,7 +34,7 @@ jobs:
         run: npm run build
 
       - name: Copy static tools
-	run: cp -r plate-calculator dist/plate-calculator
+        run: cp -r plate-calculator dist/plate-calculator
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
