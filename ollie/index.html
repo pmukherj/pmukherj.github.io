@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ollie Dreams of Sushi — Junior Chef & Food Critic</title>
+<meta name="description" content="Ollie is an 11-year-old junior chef and food critic eating his way across New York, one beautiful plate at a time. Sushi, noodles, seafood, and a vlog on the way." />
+<meta property="og:title" content="Ollie Dreams of Sushi" />
+<meta property="og:description" content="An 11-year-old junior chef & food critic, tasting his way through New York." />
+<meta property="og:image" content="ollie.jpg" />
+<meta name="theme-color" content="#0e5c63" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍣</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Caveat:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #fbf5ea;
+    --paper-2: #f4ead7;
+    --ink: #2c2520;
+    --ink-soft: #6b5f54;
+    --salmon: #ef7a64;
+    --salmon-deep: #d9583f;
+    --teal: #0e5c63;
+    --teal-deep: #0a4046;
+    --gold: #e7b04a;
+    --line: #e3d6bf;
+    --shadow: 28px 28px 60px -28px rgba(44,37,32,.45);
+  }
+
+  * , *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.7;
+    overflow-x: hidden;
+    /* subtle paper grain */
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(44,37,32,.035) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+
+  .serif { font-family: 'Fraunces', Georgia, serif; }
+  .hand  { font-family: 'Caveat', cursive; }
+
+  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- NAV ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(8px);
+    background: rgba(251,245,234,.82);
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s, box-shadow .3s;
+  }
+  nav.scrolled { border-color: var(--line); box-shadow: 0 6px 24px -18px rgba(44,37,32,.5); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 70px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: 'Fraunces'; font-weight: 900; font-size: 21px; letter-spacing: -.01em; text-decoration: none; }
+  .brand .dot { font-size: 22px; }
+  .nav-links { display: flex; gap: 30px; align-items: center; }
+  .nav-links a { text-decoration: none; font-weight: 700; font-size: 15px; color: var(--ink-soft); position: relative; transition: color .2s; }
+  .nav-links a::after { content:''; position:absolute; left:0; bottom:-5px; width:0; height:2px; background: var(--salmon); transition: width .25s; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-links a:hover::after { width: 100%; }
+  .nav-cta { background: var(--teal); color: #fff !important; padding: 9px 18px; border-radius: 999px; font-size: 14px !important; }
+  .nav-cta::after { display:none; }
+  .nav-cta:hover { background: var(--teal-deep); }
+  .burger { display: none; background: none; border: none; cursor: pointer; font-size: 26px; color: var(--ink); }
+
+  /* ---------- HERO ---------- */
+  header.hero { position: relative; padding: 60px 0 80px; }
+  .hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; }
+  .kicker { display:inline-flex; align-items:center; gap:8px; font-weight:800; font-size:13px; letter-spacing:.16em; text-transform:uppercase; color: var(--teal); background: #fff; border:1px solid var(--line); padding:7px 14px; border-radius:999px; }
+  .hero h1 { font-family:'Fraunces'; font-weight:900; font-size: clamp(46px, 8vw, 88px); line-height:.96; letter-spacing:-.02em; margin:22px 0 10px; }
+  .hero h1 .swish { color: var(--salmon-deep); font-style: italic; font-weight: 500; }
+  .hero .lede { font-size: 20px; color: var(--ink-soft); max-width: 460px; margin-bottom: 30px; }
+  .hero .lede b { color: var(--ink); font-weight: 800; }
+  .hero-cta { display:flex; gap:14px; flex-wrap:wrap; }
+  .btn { display:inline-flex; align-items:center; gap:8px; font-weight:800; text-decoration:none; padding:14px 24px; border-radius:999px; font-size:16px; transition: transform .15s, box-shadow .2s, background .2s; }
+  .btn-primary { background: var(--salmon); color:#fff; box-shadow: 0 12px 24px -12px var(--salmon-deep); }
+  .btn-primary:hover { background: var(--salmon-deep); transform: translateY(-2px); }
+  .btn-ghost { background:transparent; color: var(--ink); border:2px solid var(--ink); }
+  .btn-ghost:hover { background: var(--ink); color: var(--paper); transform: translateY(-2px); }
+
+  /* polaroid photo */
+  .photo-stack { position: relative; display:flex; justify-content:center; }
+  .polaroid { background:#fff; padding:14px 14px 0; border-radius:4px; box-shadow: var(--shadow); transform: rotate(3deg); transition: transform .4s ease; max-width: 360px; }
+  .polaroid:hover { transform: rotate(0deg) scale(1.02); }
+  .polaroid img { border-radius:2px; aspect-ratio: 3/4; object-fit: cover; }
+  .polaroid .cap { font-family:'Caveat'; font-size:25px; color: var(--ink); text-align:center; padding:10px 4px 16px; }
+  .tape { position:absolute; top:-16px; left:50%; transform: translateX(-50%) rotate(-4deg); width:120px; height:34px; background: rgba(231,176,74,.5); border:1px dashed rgba(180,130,30,.4); }
+  .badge-float { position:absolute; bottom:-18px; right:-6px; background: var(--teal); color:#fff; font-family:'Fraunces'; font-weight:900; padding:14px 16px; border-radius:14px; line-height:1; text-align:center; transform: rotate(-6deg); box-shadow: var(--shadow); }
+  .badge-float small { display:block; font-family:'Nunito'; font-weight:700; font-size:10px; letter-spacing:.1em; opacity:.85; margin-top:4px; }
+
+  /* floating doodles */
+  .doodle { position:absolute; font-size:34px; opacity:.55; pointer-events:none; animation: bob 6s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{ transform: translateY(0) rotate(0); } 50%{ transform: translateY(-12px) rotate(8deg);} }
+
+  /* ---------- MARQUEE strip ---------- */
+  .strip { background: var(--ink); color: var(--paper); padding: 16px 0; overflow:hidden; white-space:nowrap; }
+  .strip .track { display:inline-block; animation: scroll 28s linear infinite; }
+  .strip span { font-family:'Fraunces'; font-weight:600; font-style:italic; font-size:22px; padding:0 26px; }
+  .strip .star { color: var(--gold); }
+  @keyframes scroll { from{ transform: translateX(0);} to{ transform: translateX(-50%);} }
+
+  /* ---------- SECTION shells ---------- */
+  section { padding: 84px 0; }
+  .sec-head { display:flex; align-items:flex-end; gap:18px; margin-bottom:44px; }
+  .sec-num { font-family:'Caveat'; font-size:34px; color: var(--salmon); font-weight:700; }
+  .sec-head h2 { font-family:'Fraunces'; font-weight:900; font-size: clamp(32px,5vw,52px); line-height:1; letter-spacing:-.02em; }
+  .sec-head p { color: var(--ink-soft); font-size:16px; max-width: 340px; margin-left:auto; }
+
+  /* ---------- ABOUT ---------- */
+  #about { background: var(--paper-2); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .about-grid { display:grid; grid-template-columns: 1fr 1fr; gap:50px; align-items:center; }
+  .about-text p { margin-bottom:18px; font-size:19px; }
+  .about-text p:first-of-type { font-family:'Fraunces'; font-size:26px; line-height:1.4; color: var(--ink); }
+  .about-text .hand { font-size:30px; color: var(--teal); display:inline-block; transform: rotate(-3deg); }
+  .quick-facts { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .fact { background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px; }
+  .fact .ic { font-size:28px; }
+  .fact h4 { font-family:'Fraunces'; font-size:18px; margin:8px 0 2px; }
+  .fact p { color: var(--ink-soft); font-size:14px; line-height:1.45; }
+
+  /* ---------- LOVES ---------- */
+  .loves-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:22px; }
+  .love-card { background:#fff; border:1px solid var(--line); border-radius:20px; padding:28px 26px; transition: transform .3s, box-shadow .3s; position:relative; overflow:hidden; }
+  .love-card::before { content:''; position:absolute; inset:0 0 auto 0; height:5px; background: var(--accent, var(--salmon)); }
+  .love-card:hover { transform: translateY(-6px); box-shadow: 0 24px 40px -26px rgba(44,37,32,.55); }
+  .love-card .ic { font-size:42px; }
+  .love-card h3 { font-family:'Fraunces'; font-weight:900; font-size:23px; margin:14px 0 8px; }
+  .love-card p { color: var(--ink-soft); font-size:15.5px; line-height:1.55; }
+  .love-card .tag { display:inline-block; margin-top:14px; font-family:'Caveat'; font-size:21px; color: var(--accent, var(--salmon-deep)); font-weight:700; }
+
+  /* ---------- NOTEBOOK ---------- */
+  #notebook { background: var(--teal); color: var(--paper); }
+  #notebook .sec-head h2, #notebook .sec-num { color: #fff; }
+  #notebook .sec-num { color: var(--gold); }
+  #notebook .sec-head p { color: rgba(251,245,234,.7); }
+  .notes { display:grid; grid-template-columns: repeat(3,1fr); gap:22px; }
+  .note { background: var(--paper); color: var(--ink); border-radius:14px; padding:26px 24px; box-shadow: var(--shadow); position:relative; transform: rotate(var(--r,0deg)); transition: transform .3s; }
+  .note:hover { transform: rotate(0deg) translateY(-4px); }
+  /* notebook lines */
+  .note::after { content:''; position:absolute; left:24px; top:78px; bottom:60px; width:1px; background: repeating-linear-gradient(transparent, transparent 27px, var(--line) 27px, var(--line) 28px); display:none; }
+  .note .place { font-family:'Fraunces'; font-weight:900; font-size:21px; line-height:1.1; }
+  .note .dish { color: var(--salmon-deep); font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:.06em; margin:4px 0 14px; }
+  .note .body { font-family:'Caveat'; font-size:23px; line-height:1.35; color:#473d34; }
+  .rating { margin-top:16px; display:flex; align-items:center; gap:6px; font-size:18px; }
+  .rating .score { font-family:'Fraunces'; font-weight:900; font-size:15px; margin-left:6px; color: var(--ink-soft); }
+  .chop { filter: grayscale(1) opacity(.28); }
+  .chop.on { filter: none; }
+
+  /* ---------- VLOG ---------- */
+  #vlog { text-align:center; }
+  .vlog-card { background: linear-gradient(135deg, var(--ink) 0%, #3c322a 100%); color: var(--paper); border-radius:28px; padding: 64px 40px; position:relative; overflow:hidden; }
+  .vlog-card .doodle { color: var(--gold); }
+  .vlog-tag { font-family:'Caveat'; font-size:30px; color: var(--gold); }
+  .vlog-card h2 { font-family:'Fraunces'; font-weight:900; font-size: clamp(34px,6vw,60px); line-height:1; margin:6px 0 18px; }
+  .vlog-card p { color: rgba(251,245,234,.78); max-width:520px; margin:0 auto 30px; font-size:18px; }
+  .play { width:88px; height:88px; border-radius:50%; background: var(--salmon); display:flex; align-items:center; justify-content:center; margin:0 auto 26px; font-size:34px; color:#fff; box-shadow:0 0 0 0 rgba(239,122,100,.6); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%{ box-shadow:0 0 0 0 rgba(239,122,100,.55);} 70%{ box-shadow:0 0 0 26px rgba(239,122,100,0);} 100%{ box-shadow:0 0 0 0 rgba(239,122,100,0);} }
+  .notify { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:440px; margin:0 auto; }
+  .notify input { flex:1; min-width:200px; padding:14px 18px; border-radius:999px; border:none; font-size:16px; font-family:'Nunito'; }
+  .notify input:focus { outline:3px solid var(--gold); }
+
+  /* ---------- FOOTER ---------- */
+  footer { background: var(--paper-2); border-top:1px solid var(--line); padding: 50px 0 40px; text-align:center; }
+  footer .fbrand { font-family:'Fraunces'; font-weight:900; font-size:26px; }
+  footer .hand { font-family:'Caveat'; font-size:24px; color: var(--ink-soft); }
+  footer .small { color: var(--ink-soft); font-size:14px; margin-top:14px; }
+  footer a { color: var(--teal); font-weight:700; text-decoration:none; }
+
+  /* ---------- reveal anim ---------- */
+  .reveal { opacity:0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity:1; transform:none; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 860px) {
+    .nav-links { display:none; }
+    .burger { display:block; }
+    .nav-links.open { display:flex; position:absolute; top:70px; left:0; right:0; flex-direction:column; background: var(--paper); padding:20px 24px; gap:18px; border-bottom:1px solid var(--line); box-shadow: 0 12px 24px -18px rgba(44,37,32,.5); }
+    .hero-grid { grid-template-columns: 1fr; gap:60px; }
+    .photo-stack { order:-1; }
+    .about-grid { grid-template-columns:1fr; gap:36px; }
+    .loves-grid, .notes { grid-template-columns: 1fr 1fr; }
+    .sec-head { flex-direction:column; align-items:flex-start; gap:6px; }
+    .sec-head p { margin-left:0; }
+  }
+  @media (max-width: 560px) {
+    body { font-size:17px; }
+    section { padding:60px 0; }
+    .loves-grid, .notes, .quick-facts { grid-template-columns: 1fr; }
+    .hero-cta { flex-direction:column; align-items:stretch; }
+    .btn { justify-content:center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal { opacity:1; transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="wrap nav-inner">
+    <a href="#top" class="brand"><span class="dot">🍣</span> Ollie&nbsp;Dreams&nbsp;of&nbsp;Sushi</a>
+    <div class="nav-links" id="navlinks">
+      <a href="#about">About</a>
+      <a href="#loves">Favorites</a>
+      <a href="#notebook">The Notebook</a>
+      <a href="#vlog" class="nav-cta">The Vlog →</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Menu">☰</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <span class="doodle" style="top:90px; left:6%;">🦞</span>
+  <span class="doodle" style="top:230px; right:4%; animation-delay:1.5s;">🍜</span>
+  <span class="doodle" style="bottom:60px; left:12%; animation-delay:.8s;">🥢</span>
+  <div class="wrap hero-grid">
+    <div class="hero-copy reveal">
+      <span class="kicker">🗽 Junior Chef &amp; Food Critic · NYC</span>
+      <h1>Ollie Dreams<br>of <span class="swish">Sushi</span>.</h1>
+      <p class="lede">Hi, I'm <b>Oliver</b> — I'm eleven, I live in New York, and I'm eating my way across the city <b>one beautiful plate at a time.</b> Sushi, noodles, seafood pasta… if it's made with care, I want a bite.</p>
+      <div class="hero-cta">
+        <a href="#notebook" class="btn btn-primary">📖 Read my tasting notebook</a>
+        <a href="#vlog" class="btn btn-ghost">▶ The vlog is coming</a>
+      </div>
+    </div>
+    <div class="photo-stack reveal">
+      <div class="polaroid">
+        <span class="tape"></span>
+        <img src="ollie.jpg" alt="Ollie holding a cup of gelato on Broadway in New York" />
+        <div class="cap">me, mid-gelato, Broadway 🍦</div>
+        <div class="badge-float">11<small>YEARS OLD</small></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MARQUEE -->
+<div class="strip" aria-hidden="true">
+  <div class="track">
+    <span>Sushi <span class="star">✦</span></span><span>Hand-pulled Noodles <span class="star">✦</span></span><span>Soft Scrambled Eggs <span class="star">✦</span></span><span>Lobster <span class="star">✦</span></span><span>Caviar <span class="star">✦</span></span><span>Seafood Pasta <span class="star">✦</span></span><span>Clams <span class="star">✦</span></span><span>Crab <span class="star">✦</span></span><span>The Perfect Omelette <span class="star">✦</span></span>
+    <span>Sushi <span class="star">✦</span></span><span>Hand-pulled Noodles <span class="star">✦</span></span><span>Soft Scrambled Eggs <span class="star">✦</span></span><span>Lobster <span class="star">✦</span></span><span>Caviar <span class="star">✦</span></span><span>Seafood Pasta <span class="star">✦</span></span><span>Clams <span class="star">✦</span></span><span>Crab <span class="star">✦</span></span><span>The Perfect Omelette <span class="star">✦</span></span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">01</span>
+      <h2>A little about me</h2>
+      <p>Eleven years old, a fork in one hand and a notebook in the other.</p>
+    </div>
+    <div class="about-grid">
+      <div class="about-text reveal">
+        <p>I started paying attention to food the way some kids watch sports — I want to know <em>why</em> a dish is great.</p>
+        <p>For me it's never just about being full. It's the way a plate <em>looks</em>, the crunch, the temperature, the little surprise in the middle. A good dish feels like someone cared, and I can always taste it. <span class="hand">that's the magic ✦</span></p>
+        <p>So I'm starting here: writing down everything I try around New York, scoring it honestly, and getting ready to bring you along on video. Pull up a chair.</p>
+      </div>
+      <div class="quick-facts reveal">
+        <div class="fact"><div class="ic">🍣</div><h4>Forever favorite</h4><p>Sushi, every single time. Clean, simple, perfect.</p></div>
+        <div class="fact"><div class="ic">🥚</div><h4>Secret obsession</h4><p>The science of a slow, soft scramble.</p></div>
+        <div class="fact"><div class="ic">🦀</div><h4>Soft spot</h4><p>Anything from the sea — crab, lobster, clams, caviar.</p></div>
+        <div class="fact"><div class="ic">🗽</div><h4>Home base</h4><p>New York City — the best tasting menu on Earth.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOVES -->
+<section id="loves">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">02</span>
+      <h2>What Ollie loves</h2>
+      <p>The dishes I'd happily eat for the rest of my life.</p>
+    </div>
+    <div class="loves-grid">
+      <div class="love-card reveal" style="--accent:#ef7a64;">
+        <div class="ic">🍣</div>
+        <h3>Sushi</h3>
+        <p>Where it all begins. Rice that's still a touch warm, fish that tastes like the ocean, and nothing getting in the way.</p>
+        <span class="tag">the dream ✦</span>
+      </div>
+      <div class="love-card reveal" style="--accent:#e7b04a;">
+        <div class="ic">🍜</div>
+        <h3>Noodles</h3>
+        <p>Ramen, udon, hand-pulled, chilled — I love how a bowl of noodles can be cozy and exciting at the exact same time.</p>
+        <span class="tag">slurp-approved</span>
+      </div>
+      <div class="love-card reveal" style="--accent:#0e5c63;">
+        <div class="ic">🥚</div>
+        <h3>Eggs, done right</h3>
+        <p>A soft scramble or a perfect French omelette is the hardest easy thing in cooking. I respect anyone who nails it.</p>
+        <span class="tag">deceptively tricky</span>
+      </div>
+      <div class="love-card reveal" style="--accent:#d9583f;">
+        <div class="ic">🦞</div>
+        <h3>Lobster &amp; Crab</h3>
+        <p>Sweet, buttery, a little bit of a project to eat. Worth every messy second. Bring extra napkins.</p>
+        <span class="tag">worth the mess</span>
+      </div>
+      <div class="love-card reveal" style="--accent:#8a6d3b;">
+        <div class="ic">🐚</div>
+        <h3>Clams &amp; Caviar</h3>
+        <p>Tiny things, huge flavor. A briny clam or a spoon of caviar tastes like the whole sea in one bite.</p>
+        <span class="tag">fancy &amp; I love it</span>
+      </div>
+      <div class="love-card reveal" style="--accent:#c14a5e;">
+        <div class="ic">🍝</div>
+        <h3>Seafood Pasta</h3>
+        <p>My favorite mash-up: silky pasta plus everything good from the ocean. Linguine alle vongole is basically a love letter.</p>
+        <span class="tag">desert-island dish</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NOTEBOOK -->
+<section id="notebook">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">03</span>
+      <h2>The tasting notebook</h2>
+      <p>Honest notes from a hungry eleven-year-old. Scored in chopsticks, out of five.</p>
+    </div>
+    <div class="notes">
+      <div class="note reveal" style="--r:-1.5deg;">
+        <div class="place">The Sushi Counter</div>
+        <div class="dish">Omakase · salmon &amp; uni</div>
+        <p class="body">The rice was still warm and it almost fell apart in the best way. The uni tasted like the sea on a really good day. I closed my eyes for this one.</p>
+        <div class="rating" data-score="5">
+          <span class="chop">🥢</span><span class="chop">🥢</span><span class="chop">🥢</span><span class="chop">🥢</span><span class="chop">🥢</span>
+          <span class="score">5/5</span>
+        </div>
+      </div>
+      <div class="note reveal" style="--r:1.2deg;">
+        <div class="place">Little Noodle Shop</div>
+        <div class="dish">Hand-pulled ramen</div>
+        <p class="body">Broth so rich it coated the spoon. The noodles had a perfect chew. Took off half a point because it cooled down faster than I could eat it — and I eat fast.</p>
+        <div class="rating" data-score="4">
+          <span class="chop">🥢</span><span class="chop">🥢</span><span class="chop">🥢</span><span class="chop">🥢</span><span class="chop">🥢</span>
+          <span class="score">4/5</span>
+        </div>
+      </div>
+      <div class="note reveal" style="--r:-.6deg;">
+        <div class="place">Corner Trattoria</div>
+        <div class="dish">Linguine alle vongole</div>
+        <p class="body">The clams were tiny treasure chests. Garlicky, a little spicy, a little lemony. I used the bread to get every last drop and I'm not even sorry.</p>
+        <div class="rating" data-score="5">
+          <span class="chop">🥢</span><span class="chop">🥢</span><span class="chop">🥢</span><span class="chop">🥢</span><span class="chop">🥢</span>
+          <span class="score">5/5</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VLOG -->
+<section id="vlog">
+  <div class="wrap">
+    <div class="vlog-card reveal">
+      <span class="doodle" style="top:24px; left:8%;">🎬</span>
+      <span class="doodle" style="bottom:24px; right:10%; animation-delay:1s;">🍤</span>
+      <div class="play">▶</div>
+      <span class="vlog-tag">coming soon to a screen near you</span>
+      <h2>Ollie's Table</h2>
+      <p>Soon I'll be filming the whole thing — walking you into the restaurants, showing you the dishes up close, and telling you exactly what I think. No script, just an honest, hungry kid. Want to know the second the first episode drops?</p>
+      <form class="notify" onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent='You’re on the list! 🎉';">
+        <input type="email" placeholder="your email" aria-label="Email" required />
+        <button type="submit" class="btn btn-primary">Notify me</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="fbrand">🍣 Ollie Dreams of Sushi</div>
+    <p class="hand">made with love &amp; a little bit of hunger, in New York City</p>
+    <p class="small">© <span id="yr"></span> Oliver · Junior Chef &amp; Food Critic · <a href="/">back to the family site</a></p>
+  </div>
+</footer>
+
+<script>
+  // year
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // sticky nav shadow
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 12);
+  window.addEventListener('scroll', onScroll); onScroll();
+
+  // mobile menu
+  const burger = document.getElementById('burger');
+  const links = document.getElementById('navlinks');
+  burger.addEventListener('click', () => links.classList.toggle('open'));
+  links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+
+  // scroll reveal
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: .14 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // light up chopstick ratings
+  document.querySelectorAll('.rating').forEach(r => {
+    const score = +r.dataset.score;
+    r.querySelectorAll('.chop').forEach((c, i) => { if (i < score) c.classList.add('on'); });
+  });
+</script>
+</body>
+</html>
