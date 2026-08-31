@@ -37,6 +37,7 @@ jobs:
         run: |
           cp -r plate-calculator dist/plate-calculator
           cp -r ollie dist/ollie
+          cp -r splitter dist/splitter
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
