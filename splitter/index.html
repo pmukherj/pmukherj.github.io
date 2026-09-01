@@ -284,7 +284,8 @@
     ['Accountalent — 2023 tax filing', 295000, 'USD', 1],
     ['Trowbridge #1 — 2023 filing + closure', 688500, 'CAD', 1],
     ['Accountalent — 2023 + 2024 filing + mods', 245000, 'USD', 1],
-    ['Accountalent — final 2025 filing', 145000, 'USD', 1]
+    ['Accountalent — final 2025 filing', 145000, 'USD', 1],
+    ['Yan settled up', 474494, 'USD', 2, [1]]
   ];
 
   var state = {
@@ -292,7 +293,7 @@
     rate: 1.3882,
     names: ['Neil', 'PJ', 'Yan'],
     expenses: SEED.map(function (s, i) {
-      return { id: 'seed' + i, desc: s[0], cents: s[1], cur: s[2], payer: s[3], split: [0, 1, 2] };
+      return { id: 'seed' + i, desc: s[0], cents: s[1], cur: s[2], payer: s[3], split: s[4] || [0, 1, 2] };
     })
   };
   var draft = { payer: 0, split: [0, 1, 2] };
