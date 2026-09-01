@@ -38,6 +38,7 @@ jobs:
           cp -r plate-calculator dist/plate-calculator
           cp -r ollie dist/ollie
           cp -r splitter dist/splitter
+          cp -r body-fly dist/body-fly
       
       - name: Setup Pages
         uses: actions/configure-pages@v4

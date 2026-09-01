@@ -1,0 +1,173 @@
+:root {
+  font-family: "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+  color: #123b62;
+  background: #80ccff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#app, #world {
+  width: 100%;
+  height: 100%;
+}
+
+#app { min-height: 100vh; }
+
+#world {
+  display: block;
+  position: fixed;
+  inset: 0;
+}
+
+.welcome {
+  position: fixed;
+  top: clamp(1.5rem, 5vw, 4rem);
+  left: clamp(1.5rem, 7vw, 6rem);
+  pointer-events: none;
+  text-shadow: 0 2px 16px rgb(255 255 255 / 55%);
+}
+
+.eyebrow {
+  margin: 0 0 .45rem;
+  color: #2574ae;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4.3rem);
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.hint {
+  margin: .8rem 0 0;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-weight: 600;
+}
+
+#aim-target {
+  position: fixed;
+  width: 38px;
+  height: 38px;
+  left: 50%;
+  top: 50%;
+  border: 3px solid #ff7a18;
+  color: #ff7a18;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgb(255 122 24 / 80%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: left 80ms linear, top 80ms linear, border-color 80ms linear;
+}
+
+#aim-target::before,
+#aim-target::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+  color: #ff7a18;
+}
+
+#aim-target::before {
+  width: 3px;
+  height: 12px;
+  left: calc(50% - 1px);
+  top: calc(50% - 6px);
+}
+
+#aim-target::after {
+  width: 12px;
+  height: 3px;
+  left: calc(50% - 6px);
+  top: calc(50% - 1px);
+}
+
+#aim-target.locked {
+  border-color: #ffcf36;
+  color: #ffcf36;
+}
+
+.flight-instruments {
+  position: fixed;
+  z-index: 10;
+  left: clamp(1rem, 3vw, 2rem);
+  bottom: clamp(1rem, 3vw, 2rem);
+  display: flex;
+  gap: .65rem;
+  align-items: end;
+  color: #ecf8ff;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
+}
+
+.altimeter, .airspeed, .attitude {
+  padding: .55rem;
+  border: 1px solid rgb(222 247 255 / 70%);
+  border-radius: .55rem;
+  background: rgb(9 42 67 / 63%);
+  box-shadow: 0 4px 15px rgb(0 0 0 / 16%);
+}
+
+.instrument-label {
+  display: block;
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .13em;
+  opacity: .88;
+}
+
+.altimeter strong, .airspeed strong {
+  display: inline-block;
+  min-width: 3ch;
+  margin-top: .15rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.altimeter .unit, .airspeed .unit { margin-left: .15rem; font-size: .7rem; font-weight: 700; }
+
+.attitude-window {
+  position: relative;
+  width: 92px;
+  height: 72px;
+  margin-top: .32rem;
+  overflow: hidden;
+  border: 2px solid #eaf9ff;
+  border-radius: 50% / 54%;
+  background: #69bee5;
+}
+
+.attitude-world {
+  position: absolute;
+  inset: -80px -50px;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.attitude-sky, .attitude-ground { position: absolute; left: 0; width: 100%; height: 50%; }
+.attitude-sky { top: 0; background: #6cc7ed; }
+.attitude-ground { bottom: 0; background: #87532f; }
+.horizon-line { position: absolute; top: calc(50% - 1px); width: 100%; height: 2px; background: #f4f4e1; }
+
+.attitude-aircraft {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  transform: translate(-50%, -50%);
+}
+.attitude-aircraft i { width: 25px; height: 3px; background: #fff4a5; }
+.attitude-aircraft b { width: 7px; height: 7px; border: 2px solid #fff4a5; border-radius: 50%; }

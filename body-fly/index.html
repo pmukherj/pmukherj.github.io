@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#79caff" />
+    <title>Body Fly</title>
+    <link rel="stylesheet" href="./src/style.css?v=throttle-target-1" />
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="world" aria-label="A peaceful sky world with clouds"></canvas>
+      <section class="welcome" aria-live="polite">
+        <p class="eyebrow">BODY FLY</p>
+        <h1>Ready for takeoff?</h1>
+        <p class="hint">Arrow keys: pitch &amp; roll · A / D: turn · W / S: speed · Space: fire · B: boost · R: reset · I: hide plane</p>
+      </section>
+      <div id="aim-target" aria-hidden="true"></div>
+      <section class="flight-instruments" aria-label="Flight instruments">
+        <div class="altimeter">
+          <span class="instrument-label">ALTITUDE</span>
+          <strong id="altimeter-value">000</strong><span class="unit">m</span>
+        </div>
+        <div class="airspeed">
+          <span class="instrument-label">AIRSPEED</span>
+          <strong id="airspeed-value">000</strong><span class="unit">km/h</span>
+        </div>
+        <div class="attitude" aria-label="Artificial horizon">
+          <span class="instrument-label">ATTITUDE</span>
+          <div class="attitude-window">
+            <div id="attitude-world" class="attitude-world">
+              <div class="attitude-sky"></div>
+              <div class="attitude-ground"></div>
+              <div class="horizon-line"></div>
+            </div>
+            <div class="attitude-aircraft"><i></i><b></b><i></i></div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"
+        }
+      }
+    </script>
+    <script type="module" src="./src/main.js?v=flight-speed-70-1"></script>
+  </body>
+</html>
