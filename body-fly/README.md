@@ -35,11 +35,42 @@ from a CDN, so the first load needs an internet connection.
 
 ## Flight model and controls
 
+Keyboard:
+
 - `Arrow keys`: pitch and roll.
 - `A` / `D`: yaw.
 - `W` / `S`: increase/decrease throttle.
 - `B`: four-second cartoon boost.
 - `Space`: fire guns.
+
+Phone and tablet (`src/mobile-controls.js`), on any device with a coarse
+pointer:
+
+- Tip the phone towards or away from you: pitch.
+- Tilt it left or right: roll.
+- Twist it flat, like a door handle: yaw.
+- Tap the plane itself: fire guns.
+
+Tilt drives a rotation *rate*, not an attitude, so holding a bank keeps the
+plane rolling exactly as holding an arrow key does — the flight model takes
+torque, and the phone feeds the same kind of input the keyboard does. Tilt is
+added to the keyboard rather than replacing it, so a keyboard paired with a
+tablet keeps working.
+
+Three details are worth knowing before changing this code:
+
+- **Angles are relative to a neutral pose** captured when the pilot taps to
+  start, and re-captured on `orientationchange`. Any comfortable grip becomes
+  level flight. Absolute angles were tried first and are a trap: a phone held
+  bolt upright sits exactly on the ZXY gimbal lock, where roll is unreachable
+  and left/right tilt reads as yaw.
+- **Left/right tilt is wired to roll, not yaw.** Strictly it is a yaw, but
+  banking is what steering an aircraft means, and mapping it to yaw makes the
+  plane skid around flat. `SENSE` in the module flips any axis that feels
+  inverted on a given handset.
+- **iOS only releases the motion sensors from inside a user gesture**, via
+  `DeviceOrientationEvent.requestPermission()`. That is why the game cannot
+  just start listening on load, and why there is a tap-to-start overlay.
 
 Flight uses a small arcade fixed-wing model with rotational inertia, thrust, drag,
 lift, gravity, speed limits, and a target-airspeed throttle system. The current
@@ -88,13 +119,14 @@ turns yellow and snaps to targets within its screen-space lock range.
 - `src/flight-dynamics.js`: standalone flight/throttle/boost dynamics module.
 - `src/terrain.js`: procedural tiled terrain and terrain-height lookup.
 - `src/audio.js`: music, effects, and enemy spatial audio.
+- `src/mobile-controls.js`: device-orientation steering for phones and tablets.
 - `src/style.css`: game and HUD presentation.
 
 ## Hosted copy
 
 This directory is copied into `dist/` by `.github/workflows/deploy.yml`, alongside
 the other static pages on the site. It differs from the `scratchpad/body-fly`
-working copy in three ways; **redo these edits when re-syncing**.
+working copy in four ways; **redo these edits when re-syncing**.
 
 **1. Crate targets removed.** The working copy scatters 520 floating crates, built
 by splitting the supplied `assets/boxes` model into its five source box types and
@@ -104,11 +136,14 @@ and bullet collision. Enemy planes are now the only targets, so the shared
 `lockedBoxTarget` variable is renamed `lockedTarget`. This also drops ~9 MB, most
 of it the crate `metallicRoughness` and `normal` textures.
 
-**2. Explosion sounds renamed.** The originals contain a literal `#`, which is a
+**2. Tilt controls added.** `src/mobile-controls.js`, the tap-to-start overlay,
+and the tap-the-plane-to-fire hit test exist only here.
+
+**3. Explosion sounds renamed.** The originals contain a literal `#`, which is a
 fragment delimiter in URLs; they are `explosion-1..4.mp3` here, and `src/audio.js`
 points at the new names.
 
-**3. Local debugging stripped.** The working copy has a `dev-server.py` that serves
+**4. Local debugging stripped.** The working copy has a `dev-server.py` that serves
 the game at <http://localhost:8000> and records uncaught browser errors, promise
 rejections, and WebGL context-loss events in `logs/browser-console.log` — added to
 diagnose an earlier render-loop crash caused by a stale reticle variable. It is

@@ -13,9 +13,14 @@
       <section class="welcome" aria-live="polite">
         <p class="eyebrow">BODY FLY</p>
         <h1>Ready for takeoff?</h1>
-        <p class="hint">Arrow keys: pitch &amp; roll · A / D: turn · W / S: speed · Space: fire · B: boost · R: reset · I: hide plane</p>
+        <p class="hint hint-keys">Arrow keys: pitch &amp; roll · A / D: turn · W / S: speed · Space: fire · B: boost · R: reset · I: hide plane</p>
+        <p class="hint hint-tilt">Tilt to fly · Tap the plane to fire</p>
       </section>
       <div id="aim-target" aria-hidden="true"></div>
+      <button id="tilt-start" class="tilt-start" type="button" hidden>
+        <strong>Tilt to fly</strong>
+        <span>Hold your phone like a steering wheel and tap to start. Tap the plane to fire.</span>
+      </button>
       <section class="flight-instruments" aria-label="Flight instruments">
         <div class="altimeter">
           <span class="instrument-label">ALTITUDE</span>

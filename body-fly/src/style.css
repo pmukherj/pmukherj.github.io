@@ -11,6 +11,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #app, #world {
@@ -171,3 +174,47 @@ h1 {
 }
 .attitude-aircraft i { width: 25px; height: 3px; background: #fff4a5; }
 .attitude-aircraft b { width: 7px; height: 7px; border: 2px solid #fff4a5; border-radius: 50%; }
+
+/* Only one of the two control hints applies to the device in hand. */
+.hint-tilt { display: none; }
+
+@media (pointer: coarse) {
+  .hint-keys { display: none; }
+  .hint-tilt { display: block; }
+}
+
+/* Tap-to-start: iOS only releases the motion sensors from inside a real
+   user gesture, so the game cannot simply begin listening on load. */
+.tilt-start {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  width: 100%;
+  padding: 2rem clamp(1.5rem, 8vw, 4rem);
+  border: 0;
+  background: rgb(128 204 255 / 82%);
+  backdrop-filter: blur(3px);
+  color: #123b62;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.tilt-start[hidden] { display: none; }
+
+.tilt-start strong {
+  font-size: clamp(1.8rem, 9vw, 2.8rem);
+  letter-spacing: -.03em;
+}
+
+.tilt-start span {
+  max-width: 26rem;
+  font-size: clamp(.95rem, 4vw, 1.15rem);
+  font-weight: 600;
+  line-height: 1.45;
+}

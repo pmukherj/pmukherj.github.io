@@ -3,12 +3,14 @@ import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.166.1/examples/
 import { GameAudio } from './audio.js';
 import { FlightDynamics } from './flight-dynamics.js?v=flight-speed-70-1';
 import { createTerrain, terrainHeightAt, updateTerrainAround } from './terrain.js';
+import { TiltControls, supportsTilt, MIN_TAP_RADIUS } from './mobile-controls.js';
 
 const canvas = document.querySelector('#world');
 const aimTargetElement = document.querySelector('#aim-target');
 const altimeterValue = document.querySelector('#altimeter-value');
 const airspeedValue = document.querySelector('#airspeed-value');
 const attitudeWorld = document.querySelector('#attitude-world');
+const tiltStartButton = document.querySelector('#tilt-start');
 const audio = new GameAudio();
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 // Thirty detailed animated enemy models are deliberately more demanding than
@@ -195,6 +197,7 @@ const lookAhead = new THREE.Vector3();
 const desiredCameraPosition = new THREE.Vector3();
 const cameraUp = new THREE.Vector3();
 const pressedKeys = new Set();
+const tilt = new TiltControls();
 const flight = new FlightDynamics(flyer.position, flyer.quaternion);
 const projectiles = [];
 const impactBlips = [];
@@ -399,6 +402,65 @@ function updateInstruments() {
   attitudeWorld.style.transform = `translateY(${pitchOffset}px) rotate(${bank}deg)`;
 }
 
+const planeBounds = new THREE.Box3();
+const planeCorner = new THREE.Vector3();
+
+// Hit-testing the plane's screen rectangle is cheaper than a raycast and, more
+// importantly, forgiving of a fingertip. A bounding *sphere* would be simpler
+// still, but the plane is wide and thin: a circle drawn around its wingspan
+// swallows a lot of empty sky above and below it, and the tap would stop
+// meaning "the plane".
+function pointerHitsPlane(clientX, clientY) {
+  if (!planeModel || !planeModel.visible) return false;
+  planeBounds.setFromObject(planeModel);
+  if (planeBounds.isEmpty()) return false;
+
+  const halfWidth = window.innerWidth / 2;
+  const halfHeight = window.innerHeight / 2;
+  let minX = Infinity; let minY = Infinity;
+  let maxX = -Infinity; let maxY = -Infinity;
+
+  for (let corner = 0; corner < 8; corner += 1) {
+    planeCorner.set(
+      corner & 1 ? planeBounds.max.x : planeBounds.min.x,
+      corner & 2 ? planeBounds.max.y : planeBounds.min.y,
+      corner & 4 ? planeBounds.max.z : planeBounds.min.z,
+    ).project(camera);
+    // A corner behind the camera projects to a mirrored, meaningless point.
+    if (planeCorner.z > 1) return false;
+    const x = (planeCorner.x + 1) * halfWidth;
+    const y = (1 - planeCorner.y) * halfHeight;
+    minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+  }
+
+  // Keep a thin, distant plane tappable without inflating one that already
+  // fills the screen.
+  const padX = Math.max(0, (MIN_TAP_RADIUS - (maxX - minX)) / 2);
+  const padY = Math.max(0, (MIN_TAP_RADIUS - (maxY - minY)) / 2);
+
+  return clientX >= minX - padX && clientX <= maxX + padX
+    && clientY >= minY - padY && clientY <= maxY + padY;
+}
+
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+
+if (supportsTilt()) {
+  document.body.classList.add('tilt-available');
+  tiltStartButton.hidden = false;
+  tiltStartButton.addEventListener('click', async () => {
+    audio.unlock();
+    const started = await tilt.start();
+    if (started) {
+      tiltStartButton.hidden = true;
+      document.body.classList.add('tilt-flying');
+    } else {
+      // Without the sensor grant there is nothing to fall back to but a note.
+      tiltStartButton.textContent = 'Motion access was declined — reload to try again.';
+    }
+  });
+}
+
 window.addEventListener('keydown', (event) => {
   audio.unlock();
   if (event.code === 'Space' && !event.repeat) {
@@ -436,19 +498,35 @@ window.addEventListener('keyup', (event) => {
 });
 
 window.addEventListener('blur', () => pressedKeys.clear());
-canvas.addEventListener('pointerdown', () => audio.unlock());
+canvas.addEventListener('pointerdown', (event) => {
+  audio.unlock();
+  if (!isTouchDevice) return;
+  if (pointerHitsPlane(event.clientX, event.clientY)) {
+    event.preventDefault();
+    shootGuns();
+  }
+});
 
 const clock = new THREE.Clock();
 function render() {
   const delta = Math.min(clock.getDelta(), 0.05);
   const time = clock.elapsedTime;
 
-  flight.update(delta, {
+  const controls = {
     pitch: Number(pressedKeys.has('ArrowUp')) - Number(pressedKeys.has('ArrowDown')),
     roll: Number(pressedKeys.has('ArrowLeft')) - Number(pressedKeys.has('ArrowRight')),
     yaw: Number(pressedKeys.has('KeyA')) - Number(pressedKeys.has('KeyD')),
     throttle: Number(pressedKeys.has('KeyW')) - Number(pressedKeys.has('KeyS')),
-  });
+  };
+  // Tilt adds to the keys rather than replacing them, so a paired Bluetooth
+  // keyboard keeps working on a tablet.
+  const tiltInput = tilt.read();
+  if (tiltInput) {
+    controls.pitch = THREE.MathUtils.clamp(controls.pitch + tiltInput.pitch, -1, 1);
+    controls.roll = THREE.MathUtils.clamp(controls.roll + tiltInput.roll, -1, 1);
+    controls.yaw = THREE.MathUtils.clamp(controls.yaw + tiltInput.yaw, -1, 1);
+  }
+  flight.update(delta, controls);
   updateInstruments();
 
   updateEnemies(delta, time);
