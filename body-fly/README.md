@@ -27,9 +27,20 @@ from a CDN, so the first load needs an internet connection.
 
 ## Player aircraft and camera
 
-- The original triangle prototype was replaced with the supplied glTF plane model from `assets/plane-model`.
-- The plane uses a red-tinted version of its original UV texture so panel detail and decals are retained.
-- The propeller is re-parented around its visual hub and spins independently.
+- The player flies the F-16 in `assets/plane-model2`, keeping its own liveries
+  and materials. It replaced the earlier prop plane in `assets/plane-model`,
+  which is no longer loaded.
+- The model is authored nose-towards +Z, so it is turned 180 degrees to face the
+  -Z the game flies along. `PLANE_SCALE` sizes it by wingspan rather than
+  length: the jet is longer and narrower than the prop plane it replaced, and
+  matching span is what keeps its presence on screen familiar.
+- The gun muzzles sit at the same fraction of the wing half-span as before, so
+  they stayed on the wings across the swap rather than hanging past the tips.
+- The prop plane's red UV retint is gone. It was applied to every mesh, which
+  on a 60-material airframe would have painted the whole jet in one borrowed
+  texture.
+- The propeller re-parenting code remains and is inert: it is guarded on a
+  `Propeller` node, and a jet has none.
 - The follow camera remains behind the plane and looks ahead along its path.
 - `I` toggles player-plane visibility and `R` resets the plane, velocity, and opening cloud position.
 
@@ -126,7 +137,7 @@ turns yellow and snaps to targets within its screen-space lock range.
 
 This directory is copied into `dist/` by `.github/workflows/deploy.yml`, alongside
 the other static pages on the site. It differs from the `scratchpad/body-fly`
-working copy in four ways; **redo these edits when re-syncing**.
+working copy in five ways; **redo these edits when re-syncing**.
 
 **1. Crate targets removed.** The working copy scatters 520 floating crates, built
 by splitting the supplied `assets/boxes` model into its five source box types and
@@ -136,14 +147,18 @@ and bullet collision. Enemy planes are now the only targets, so the shared
 `lockedBoxTarget` variable is renamed `lockedTarget`. This also drops ~9 MB, most
 of it the crate `metallicRoughness` and `normal` textures.
 
-**2. Tilt controls added.** `src/mobile-controls.js`, the tap-to-start overlay,
+**2. Player aircraft swapped** to the F-16 in `assets/plane-model2`. The working
+copy still flies the prop plane from `assets/plane-model`. Note this is a 16.9 MB
+model — by far the largest thing the page loads.
+
+**3. Tilt controls added.** `src/mobile-controls.js`, the tap-to-start overlay,
 and the tap-the-plane-to-fire hit test exist only here.
 
-**3. Explosion sounds renamed.** The originals contain a literal `#`, which is a
+**4. Explosion sounds renamed.** The originals contain a literal `#`, which is a
 fragment delimiter in URLs; they are `explosion-1..4.mp3` here, and `src/audio.js`
 points at the new names.
 
-**4. Local debugging stripped.** The working copy has a `dev-server.py` that serves
+**5. Local debugging stripped.** The working copy has a `dev-server.py` that serves
 the game at <http://localhost:8000> and records uncaught browser errors, promise
 rejections, and WebGL context-loss events in `logs/browser-console.log` — added to
 diagnose an earlier render-loop crash caused by a stale reticle variable. It is

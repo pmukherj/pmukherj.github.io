@@ -67,14 +67,6 @@ scene.add(sun, new THREE.HemisphereLight(0xbfeaff, 0xffffff, 2.4));
 const terrain = createTerrain();
 scene.add(terrain);
 
-// A red hue-shifted copy of the original UV map. Its panel lines, pale pieces,
-// and insignia are all preserved because this is the same texture layout.
-const planeTexture = new THREE.TextureLoader().load(
-  './assets/plane-model/textures/gltf_red_0.png?v=2',
-);
-planeTexture.colorSpace = THREE.SRGBColorSpace;
-planeTexture.flipY = false;
-
 function makeCloud(x, y, z, scale = 1) {
   const cloud = new THREE.Group();
   const material = new THREE.MeshStandardMaterial({
@@ -130,27 +122,25 @@ const flyer = new THREE.Group();
 flyer.position.set(0, 4, 0);
 scene.add(flyer);
 
+// Sized so the jet's wingspan reads much like the old prop plane's did from
+// the chase camera. It is a longer, narrower airframe, so matching span rather
+// than length is what keeps its on-screen presence familiar.
+const PLANE_SCALE = 0.45;
 const loader = new GLTFLoader();
 let planeModel;
 let propellerPivot;
 loader.load(
-  './assets/plane-model/source/model.gltf',
+  './assets/plane-model2/f-16_block_70_-_peruvian.glb',
   (gltf) => {
     planeModel = gltf.scene;
-    planeModel.scale.setScalar(0.38);
+    // The model is authored nose-towards +Z; the game flies towards -Z.
+    planeModel.rotation.y = Math.PI;
+    planeModel.scale.setScalar(PLANE_SCALE);
     const modelBounds = new THREE.Box3().setFromObject(planeModel);
     planeModel.position.y = -(modelBounds.min.y + modelBounds.max.y) / 2;
     planeModel.traverse((child) => {
       if (!child.isMesh) return;
       child.castShadow = true;
-      const materials = Array.isArray(child.material) ? child.material : [child.material];
-      materials.forEach((material) => {
-        material.map = planeTexture;
-        material.color.set('#ffffff');
-        material.metalness = 0.08;
-        material.roughness = 0.46;
-        material.needsUpdate = true;
-      });
     });
     flyer.add(planeModel);
 
@@ -208,9 +198,12 @@ const projectileMaterial = new THREE.MeshBasicMaterial({ color: 0xffef8b });
 const impactGeometry = new THREE.SphereGeometry(0.18, 10, 8);
 const impactMaterial = new THREE.MeshBasicMaterial({ color: 0xff7600 });
 const explosionGeometry = new THREE.SphereGeometry(1, 16, 12);
+// Set in from the wing roots, at the same fraction of the span the old plane's
+// guns sat at. The jet is the narrower airframe, so reusing its predecessor's
+// offsets would have hung the muzzles out past the wingtips.
 const wingMuzzles = [
-  new THREE.Vector3(-1.28, 0, -0.45),
-  new THREE.Vector3(1.28, 0, -0.45),
+  new THREE.Vector3(-1.05, -0.05, -0.6),
+  new THREE.Vector3(1.05, -0.05, -0.6),
 ];
 const projectileDirection = new THREE.Vector3();
 const projectileUp = new THREE.Vector3(0, 1, 0);
