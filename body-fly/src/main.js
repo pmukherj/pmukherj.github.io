@@ -4,6 +4,7 @@ import { GameAudio } from './audio.js';
 import { FlightDynamics } from './flight-dynamics.js?v=flight-speed-70-1';
 import { createTerrain, terrainHeightAt, updateTerrainAround } from './terrain.js';
 import { TiltControls, supportsTilt, MIN_TAP_RADIUS } from './mobile-controls.js';
+import { Afterburner } from './afterburner.js';
 
 const canvas = document.querySelector('#world');
 const aimTargetElement = document.querySelector('#aim-target');
@@ -121,6 +122,9 @@ for (let index = 0; index < 90; index += 1) {
 const flyer = new THREE.Group();
 flyer.position.set(0, 4, 0);
 scene.add(flyer);
+
+const afterburner = new Afterburner();
+flyer.add(afterburner.group);
 
 // Sized so the jet's wingspan reads much like the old prop plane's did from
 // the chase camera. It is a longer, narrower airframe, so matching span rather
@@ -471,6 +475,7 @@ window.addEventListener('keydown', (event) => {
   if (event.code === 'KeyI' && !event.repeat) {
     event.preventDefault();
     if (planeModel) planeModel.visible = !planeModel.visible;
+    afterburner.group.visible = planeModel ? planeModel.visible : true;
     return;
   }
 
@@ -520,6 +525,7 @@ function render() {
     controls.yaw = THREE.MathUtils.clamp(controls.yaw + tiltInput.yaw, -1, 1);
   }
   flight.update(delta, controls);
+  afterburner.update(delta, flight.throttle, flight.boostTime > 0);
   updateInstruments();
 
   updateEnemies(delta, time);

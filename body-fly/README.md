@@ -41,6 +41,13 @@ from a CDN, so the first load needs an internet connection.
   texture.
 - The propeller re-parenting code remains and is inert: it is guarded on a
   `Propeller` node, and a jet has none.
+- The engine burns (`src/afterburner.js`): two additively blended cones, a short
+  blue-white shock core inside a longer orange plume, positioned from the
+  model's own `Afterburners` mesh. Its length follows the throttle and stretches
+  hard on boost, with per-axis flicker so it does not read as a solid cone
+  glued to the tail. The model's built-in `Afterburner_can_flames` node was not
+  usable for this: its only animation track is a rotation, with nothing driving
+  intensity.
 - The follow camera remains behind the plane and looks ahead along its path.
 - `I` toggles player-plane visibility and `R` resets the plane, velocity, and opening cloud position.
 
@@ -132,6 +139,7 @@ turns yellow and snaps to targets within its screen-space lock range.
 - `src/terrain.js`: procedural tiled terrain and terrain-height lookup.
 - `src/audio.js`: music, effects, and enemy spatial audio.
 - `src/mobile-controls.js`: device-orientation steering for phones and tablets.
+- `src/afterburner.js`: throttle-driven engine flame.
 - `src/style.css`: game and HUD presentation.
 
 ## Hosted copy
