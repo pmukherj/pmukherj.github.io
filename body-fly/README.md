@@ -120,7 +120,8 @@ turns yellow and snaps to targets within its screen-space lock range.
 ## Audio
 
 - Background music loops from `assets/music/Dogfight Over Dawn.mp3`.
-- Gunfire uses `assets/sounds/bullet_sound.mp3`.
+- Gunfire uses `assets/sounds/fighter_jet_bullet.mp3`, to match the jet. The
+  prop plane's `bullet_sound.mp3` is still in the folder but no longer loaded.
 - Each explosion randomly selects one of the four supplied cartoon plane explosion sounds.
 - Audio begins after a click or key press, which is required by browser autoplay policies.
 

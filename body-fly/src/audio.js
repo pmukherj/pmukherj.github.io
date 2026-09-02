@@ -3,7 +3,7 @@ export class GameAudio {
   constructor() {
     this.context = null;
     this.lastShotAt = -Infinity;
-    this.shotSound = new Audio('./assets/sounds/bullet_sound.mp3');
+    this.shotSound = new Audio('./assets/sounds/fighter_jet_bullet.mp3');
     this.music = new Audio('./assets/music/Dogfight Over Dawn.mp3');
     this.music.loop = true;
     this.music.volume = 0.2;
