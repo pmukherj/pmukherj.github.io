@@ -109,6 +109,13 @@ The bottom-left instrument cluster includes:
 The centre reticle sits at the guns' convergence point ahead of the aircraft. It
 turns yellow and snaps to targets within its screen-space lock range.
 
+Bottom-right, mirroring the instruments, is a count of the enemy planes still
+flying. Destroyed aircraft are spliced out of the squadron for good — only
+living ones are recycled when they stray — so the count runs down from 30 to 00
+and is simply `enemies.length`. It reads the full count until the enemy model
+loads, rather than flashing an empty field, and is written to the DOM only when
+it changes.
+
 ## Weapons and effects
 
 - Firing creates twin projectiles from the wing guns.

@@ -13,6 +13,7 @@ const altimeterValue = document.querySelector('#altimeter-value');
 const airspeedValue = document.querySelector('#airspeed-value');
 const attitudeWorld = document.querySelector('#attitude-world');
 const tiltStartButton = document.querySelector('#tilt-start');
+const enemiesValue = document.querySelector('#enemies-value');
 const audio = new GameAudio();
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 // Thirty detailed animated enemy models are deliberately more demanding than
@@ -201,6 +202,11 @@ const projectiles = [];
 const impactBlips = [];
 const explosions = [];
 const enemies = [];
+const ENEMY_COUNT = 30;
+// The squadron only exists once its model has loaded. Until then the readout
+// shows the full count rather than flashing an empty field.
+let enemiesSpawned = false;
+let shownEnemyCount = -1;
 const projectileGeometry = new THREE.CylinderGeometry(0.045, 0.045, 0.52, 8);
 const projectileMaterial = new THREE.MeshBasicMaterial({ color: 0xffef8b });
 const impactGeometry = new THREE.SphereGeometry(0.18, 10, 8);
@@ -286,7 +292,7 @@ function placeEnemy(enemy) {
 }
 
 function createEnemies(template, clips) {
-  for (let index = 0; index < 30; index += 1) {
+  for (let index = 0; index < ENEMY_COUNT; index += 1) {
     const group = new THREE.Group();
     const model = template.clone(true);
     group.add(model);
@@ -308,6 +314,7 @@ function createEnemies(template, clips) {
     enemies.push(enemy);
     scene.add(group);
   }
+  enemiesSpawned = true;
 }
 
 function updateEnemies(delta, time) {
@@ -398,6 +405,13 @@ function updateInstruments() {
   const altitude = Math.max(0, flyer.position.y - terrainHeightAt(flyer.position.x, flyer.position.z));
   altimeterValue.textContent = String(Math.round(altitude)).padStart(3, '0');
   airspeedValue.textContent = String(Math.round(flight.velocity.length() * 3.6)).padStart(3, '0');
+  // This changes a few dozen times a game, not sixty times a second, so it is
+  // only written to the DOM when it actually moves.
+  const remaining = enemiesSpawned ? enemies.length : ENEMY_COUNT;
+  if (remaining !== shownEnemyCount) {
+    shownEnemyCount = remaining;
+    enemiesValue.textContent = String(remaining).padStart(2, '0');
+  }
   flightEuler.setFromQuaternion(flyer.quaternion, 'YXZ');
   const pitchOffset = THREE.MathUtils.clamp(flightEuler.x * 72, -42, 42);
   const bank = THREE.MathUtils.clamp(-THREE.MathUtils.radToDeg(flightEuler.z), -75, 75);

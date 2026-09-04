@@ -100,6 +100,18 @@ h1 {
   color: #ffcf36;
 }
 
+/* Mirrors .flight-instruments into the opposite corner. */
+.scoreboard {
+  position: fixed;
+  z-index: 10;
+  right: clamp(1rem, 3vw, 2rem);
+  bottom: clamp(1rem, 3vw, 2rem);
+  color: #ecf8ff;
+  pointer-events: none;
+  text-align: right;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
+}
+
 .flight-instruments {
   position: fixed;
   z-index: 10;
@@ -113,7 +125,7 @@ h1 {
   text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
 }
 
-.altimeter, .airspeed, .attitude {
+.altimeter, .airspeed, .attitude, .enemies {
   padding: .55rem;
   border: 1px solid rgb(222 247 255 / 70%);
   border-radius: .55rem;
@@ -129,7 +141,7 @@ h1 {
   opacity: .88;
 }
 
-.altimeter strong, .airspeed strong {
+.altimeter strong, .airspeed strong, .enemies strong {
   display: inline-block;
   min-width: 3ch;
   margin-top: .15rem;
