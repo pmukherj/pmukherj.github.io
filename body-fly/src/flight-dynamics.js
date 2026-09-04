@@ -13,6 +13,8 @@ export class FlightDynamics {
     this.minAirspeed = 5.6;
     this.maxAirspeed = 22.4;
     this.boostTime = 0;
+    this.tumbleTime = 0;
+    this.tumbleSpin = new THREE.Vector3();
 
     this.forward = new THREE.Vector3();
     this.up = new THREE.Vector3();
@@ -26,10 +28,39 @@ export class FlightDynamics {
     this.angularVelocity.set(0, 0, 0);
     this.throttle = 0.2;
     this.boostTime = 0;
+    this.tumbleTime = 0;
   }
 
   activateBoost() {
     this.boostTime = 4;
+  }
+
+  get tumbling() {
+    return this.tumbleTime > 0;
+  }
+
+  // Wrench the aircraft into a flat spin for a moment. Yaw dominates because
+  // that is what reads as "caught by something" rather than as a barrel roll,
+  // and the roll is dragged the same way so the spin looks driven rather than
+  // chosen.
+  startTumble(seconds) {
+    this.tumbleTime = seconds;
+    const sense = Math.random() < 0.5 ? -1 : 1;
+    this.tumbleSpin.set(
+      (Math.random() - 0.5) * 1.1,
+      sense * (6.5 + Math.random() * 3),
+      sense * (1.1 + Math.random() * 1.2),
+    );
+  }
+
+  // Shared by ordinary flight and by the tumble, which needs the same
+  // integration but none of the pilot's say in it.
+  applyRotation(delta) {
+    const turnAmount = this.angularVelocity.length() * delta;
+    if (turnAmount === 0) return;
+    this.rotationStep.setFromAxisAngle(this.angularVelocity.clone().normalize(), turnAmount);
+    // Post-multiplication rotates around the flyer's local pitch/roll axes.
+    this.quaternion.multiply(this.rotationStep);
   }
 
   update(delta, controls) {
@@ -42,22 +73,29 @@ export class FlightDynamics {
     this.boostTime = Math.max(0, this.boostTime - delta);
     const isBoosting = this.boostTime > 0;
 
+    if (this.tumbleTime > 0) {
+      this.tumbleTime = Math.max(0, this.tumbleTime - delta);
+      // The spin rate is imposed outright rather than fed through the usual
+      // torque and clamp, which cap turns far below what a tumble should look
+      // like. The controls are ignored: being out of control is the point.
+      this.angularVelocity.copy(this.tumbleSpin);
+      this.applyRotation(delta);
+      // Momentum carries the aircraft: no thrust, no lift, just light drag and
+      // a softened gravity, so a spin near the deck is not a guaranteed ground
+      // strike before it can be flung clear.
+      this.velocity.addScaledVector(this.velocity, -0.3 * delta);
+      this.velocity.y -= 1.2 * delta;
+      this.position.addScaledVector(this.velocity, delta);
+      return;
+    }
+
     // Inputs are rotational acceleration (torque), not an immediate rotation.
     this.angularVelocity.x += pitch * 2.7 * delta;
     this.angularVelocity.y += yaw * 2.0 * delta;
     this.angularVelocity.z += roll * 3.3 * delta;
     this.angularVelocity.multiplyScalar(Math.exp(-2.2 * delta));
     this.angularVelocity.clampLength(0, 1.55);
-
-    const turnAmount = this.angularVelocity.length() * delta;
-    if (turnAmount > 0) {
-      this.rotationStep.setFromAxisAngle(
-        this.angularVelocity.clone().normalize(),
-        turnAmount,
-      );
-      // Post-multiplication rotates around the flyer's local pitch/roll axes.
-      this.quaternion.multiply(this.rotationStep);
-    }
+    this.applyRotation(delta);
 
     this.forward.set(0, 0, -1).applyQuaternion(this.quaternion);
     this.up.set(0, 1, 0).applyQuaternion(this.quaternion);

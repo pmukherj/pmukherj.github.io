@@ -132,9 +132,22 @@ it changes.
   so it is stretched rather than scaled and dropped onto its own base. The
   stretch is what puts the column in the plane's cruising altitude instead of
   leaving a bowl on the ground.
-- Flying into one explodes the plane and restarts the flight. The collision
-  cylinder tapers with the funnel, so passing under the flare is a near miss
-  rather than a crash in clear air.
+- Touching one is survivable, not fatal. The aircraft is wrenched into a flat
+  spin for just over a second — yaw dominant, at roughly 400-560 deg/s, with the
+  roll dragged the same way so it looks driven rather than chosen — and is then
+  flung clear, nose pointed away from the funnel on a randomly spread heading.
+  The pilot has no say during the spin; that is the point of it.
+- The spin lives in `FlightDynamics.startTumble`, not in the caller, because the
+  rate has to bypass the usual torque and clamp that cap ordinary turns far
+  below what a tumble should look like. Through it the aircraft coasts on
+  momentum with light drag and softened gravity, so a spin near the deck is not
+  a guaranteed ground strike before it can be thrown clear.
+- `ejectFrom` sets the exit position and the heading from the same outward
+  vector, so facing-away is true by construction rather than by tuning. It
+  clears the funnel by 11 units, comfortably past the strike radius, so the
+  aircraft cannot pop out and be caught again on the next frame.
+- The collision cylinder tapers with the funnel, so passing under the flare is a
+  near miss rather than a spin in clear air.
 - They spawn 110-220 units out. That ring is set by the camera's 250 far plane:
   spawned further, most of the field would stand in clipped space where nobody
   can see it. A reset also pushes any twister off the start point, which

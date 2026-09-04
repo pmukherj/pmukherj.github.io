@@ -203,6 +203,18 @@ const impactBlips = [];
 const explosions = [];
 const enemies = [];
 const ENEMY_COUNT = 30;
+// A tornado brush spins the aircraft for a moment, then flings it clear.
+const TUMBLE_SECONDS = 1.15;
+const EJECT_SPEED = 21;
+// Cleared well past the strike radius, which already includes the plane, so
+// the aircraft cannot pop out and immediately be caught again.
+const EJECT_CLEARANCE = 11;
+const EJECT_SPREAD = Math.PI * 0.55;
+const EJECT_MIN_ALTITUDE = 7;
+const worldUp = new THREE.Vector3(0, 1, 0);
+const ejectDirection = new THREE.Vector3();
+const ejectEuler = new THREE.Euler();
+let tumbleSource = null;
 // The squadron only exists once its model has loaded. Until then the readout
 // shows the full count rather than flashing an empty field.
 let enemiesSpawned = false;
@@ -394,11 +406,44 @@ function destroyEnemy(enemy) {
   if (lockedTarget === enemy.group) lockedTarget = null;
 }
 
+// Fling the aircraft out of a tornado: clear of the funnel, nose pointed away
+// from it with a wide random spread, so a brush ends in a scramble rather than
+// in a crash.
+function ejectFrom(tornado) {
+  ejectDirection.set(
+    flyer.position.x - tornado.anchor.position.x,
+    0,
+    flyer.position.z - tornado.anchor.position.z,
+  );
+  // Dead centre has no outward direction to speak of, so pick one.
+  if (ejectDirection.lengthSq() < 1e-4) ejectDirection.set(Math.random() - 0.5, 0, Math.random() - 0.5);
+  ejectDirection.normalize().applyAxisAngle(worldUp, (Math.random() - 0.5) * EJECT_SPREAD).normalize();
+
+  const climb = THREE.MathUtils.clamp(
+    (flyer.position.y - tornado.anchor.position.y) / tornado.height, 0, 1,
+  );
+  const clearance = THREE.MathUtils.lerp(tornado.baseRadius, tornado.topRadius, climb) + EJECT_CLEARANCE;
+  flyer.position.x = tornado.anchor.position.x + ejectDirection.x * clearance;
+  flyer.position.z = tornado.anchor.position.z + ejectDirection.z * clearance;
+  // Spat out just above the hills rather than into them.
+  flyer.position.y = Math.max(
+    flyer.position.y,
+    terrainHeightAt(flyer.position.x, flyer.position.z) + EJECT_MIN_ALTITUDE,
+  );
+
+  // Nose onto the escape heading, wings level. Forward is -Z, hence the signs.
+  ejectEuler.set(0, Math.atan2(-ejectDirection.x, -ejectDirection.z), 0);
+  flyer.quaternion.setFromEuler(ejectEuler);
+  flight.angularVelocity.set(0, 0, 0);
+  flight.velocity.copy(ejectDirection).multiplyScalar(EJECT_SPEED);
+}
+
 function resetFlight() {
   // Return to the original altitude, surrounded by the opening cloud field.
   flight.reset();
   clouds.forEach((cloud) => cloud.position.copy(cloud.userData.startPosition));
   tornadoes.clearAround(flyer.position);
+  tumbleSource = null;
 }
 
 function updateInstruments() {
@@ -631,12 +676,18 @@ function render() {
   // No crash sequence yet: a ground touch simply starts another flight.
   if (flyer.position.y <= terrainHeightAt(flyer.position.x, flyer.position.z) + 0.35) {
     resetFlight();
-  } else if (tornadoes.strikes(flyer.position)) {
-    // Being swallowed by a firestorm deserves more than the silent ground
-    // reset does.
-    createExplosion(flyer.position);
-    audio.explode();
-    resetFlight();
+  } else if (tumbleSource) {
+    // Ride out the spin, then get thrown clear of whatever caused it.
+    if (!flight.tumbling) {
+      ejectFrom(tumbleSource);
+      tumbleSource = null;
+    }
+  } else {
+    const struck = tornadoes.strikes(flyer.position);
+    if (struck) {
+      flight.startTumble(TUMBLE_SECONDS);
+      tumbleSource = struck;
+    }
   }
 
   // The view stays locked to the back of the flyer, including its turns and bank.
