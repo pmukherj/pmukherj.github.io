@@ -116,6 +116,23 @@ turns yellow and snaps to targets within its screen-space lock range.
 - Hits create expanding orange explosions and remove the target.
 - Bullets track a locked enemy, or gently acquire an enemy that passes close to their path.
 
+## Fire tornadoes
+
+- Ten twisters from `assets/tornado` roam the field (`src/tornadoes.js`), each
+  spinning on its own axis and wandering on a slowly changing heading. They are
+  re-seated on the terrain as they drift, so a tip never floats over a hill.
+- The model is authored squat — wider than tall — and floating off its origin,
+  so it is stretched rather than scaled and dropped onto its own base. The
+  stretch is what puts the column in the plane's cruising altitude instead of
+  leaving a bowl on the ground.
+- Flying into one explodes the plane and restarts the flight. The collision
+  cylinder tapers with the funnel, so passing under the flare is a near miss
+  rather than a crash in clear air.
+- They spawn 110-220 units out. That ring is set by the camera's 250 far plane:
+  spawned further, most of the field would stand in clipped space where nobody
+  can see it. A reset also pushes any twister off the start point, which
+  otherwise kills each new flight the instant it begins, on repeat.
+
 ## Enemy aircraft
 
 - The supplied `assets/enemy-plane` glTF is used for enemy aircraft.
@@ -140,6 +157,7 @@ turns yellow and snaps to targets within its screen-space lock range.
 - `src/audio.js`: music, effects, and enemy spatial audio.
 - `src/mobile-controls.js`: device-orientation steering for phones and tablets.
 - `src/afterburner.js`: throttle-driven engine flame.
+- `src/tornadoes.js`: roaming fire tornadoes and their collision test.
 - `src/style.css`: game and HUD presentation.
 
 ## Hosted copy

@@ -5,6 +5,7 @@ import { FlightDynamics } from './flight-dynamics.js?v=flight-speed-70-1';
 import { createTerrain, terrainHeightAt, updateTerrainAround } from './terrain.js';
 import { TiltControls, supportsTilt, MIN_TAP_RADIUS } from './mobile-controls.js';
 import { Afterburner } from './afterburner.js';
+import { TornadoField } from './tornadoes.js';
 
 const canvas = document.querySelector('#world');
 const aimTargetElement = document.querySelector('#aim-target');
@@ -67,6 +68,9 @@ scene.add(sun, new THREE.HemisphereLight(0xbfeaff, 0xffffff, 2.4));
 
 const terrain = createTerrain();
 scene.add(terrain);
+
+const tornadoes = new TornadoField(scene);
+tornadoes.load((error) => console.error('Could not load tornadoes:', error));
 
 function makeCloud(x, y, z, scale = 1) {
   const cloud = new THREE.Group();
@@ -387,6 +391,7 @@ function resetFlight() {
   // Return to the original altitude, surrounded by the opening cloud field.
   flight.reset();
   clouds.forEach((cloud) => cloud.position.copy(cloud.userData.startPosition));
+  tornadoes.clearAround(flyer.position);
 }
 
 function updateInstruments() {
@@ -528,6 +533,7 @@ function render() {
   afterburner.update(delta, flight.throttle, flight.boostTime > 0);
   updateInstruments();
 
+  tornadoes.update(delta, flyer.position);
   updateEnemies(delta, time);
 
   updateTerrainAround(terrain, flyer.position.x, flyer.position.z);
@@ -610,6 +616,12 @@ function render() {
 
   // No crash sequence yet: a ground touch simply starts another flight.
   if (flyer.position.y <= terrainHeightAt(flyer.position.x, flyer.position.z) + 0.35) {
+    resetFlight();
+  } else if (tornadoes.strikes(flyer.position)) {
+    // Being swallowed by a firestorm deserves more than the silent ground
+    // reset does.
+    createExplosion(flyer.position);
+    audio.explode();
     resetFlight();
   }
 
