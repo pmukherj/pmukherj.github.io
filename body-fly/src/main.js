@@ -135,10 +135,12 @@ flyer.add(afterburner.group);
 // chase camera. A fighter is far longer than it is wide, so matching span
 // rather than length is what keeps its presence on screen familiar.
 const PLANE_SCALE = 0.04;
-// How far back the engines exit, in the model's own units. The aircraft is slid
-// along Z until that point lands on the flame, so swapping airframes moves the
-// plane onto the fire rather than dragging the fire to a new tail.
-const PLANE_EXHAUST_Z = 44.09;
+// How far back the engines exit, in the model's own units, measured off the
+// engine cans rather than off the rearmost geometry: the stabilators and fins
+// both reach further back than the pipes do. The aircraft is slid along Z until
+// that point lands on the flame, so swapping airframes moves the plane onto the
+// fire rather than dragging the fire to a new tail.
+const PLANE_EXHAUST_Z = 38.44;
 const PLANE_SEAT_Z = FLAME.z - PLANE_EXHAUST_Z * PLANE_SCALE;
 const loader = new GLTFLoader();
 let planeModel;

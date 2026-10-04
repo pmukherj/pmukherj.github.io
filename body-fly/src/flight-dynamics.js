@@ -1,5 +1,13 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js';
 
+const GRAVITY = 3.7;
+// The speed at which the wings can just carry the aircraft. Above it lift is
+// capped at exactly the weight it has to lift, so hands-off level flight holds
+// its altitude; below it the wings come up short and the aircraft settles,
+// which is what keeps the throttle worth touching.
+const FLYING_SPEED = 7;
+const LIFT_PER_SPEED_SQUARED = GRAVITY / (FLYING_SPEED * FLYING_SPEED);
+
 // A deliberately small, arcade-friendly fixed-wing flight model. It is not a
 // full aerodynamics simulator, but it gives the flyer inertia, momentum, lift,
 // gravity, and damping—the ingredients that make steering feel physical.
@@ -84,7 +92,7 @@ export class FlightDynamics {
       // a softened gravity, so a spin near the deck is not a guaranteed ground
       // strike before it can be flung clear.
       this.velocity.addScaledVector(this.velocity, -0.3 * delta);
-      this.velocity.y -= 1.2 * delta;
+      this.velocity.y -= GRAVITY * 0.32 * delta;
       this.position.addScaledVector(this.velocity, delta);
       return;
     }
@@ -117,14 +125,18 @@ export class FlightDynamics {
     const forwardSpeed = this.velocity.dot(this.forward);
     this.velocity.addScaledVector(this.forward, (targetAirspeed - forwardSpeed) * 2.8 * delta);
 
-    // Lift grows rapidly with speed and points through the flyer's local top.
-    // A light gravity term means a steep bank or climb naturally costs height.
-    // Boost is deliberately about forward speed, not launching vertically.
-    // Cap its lift calculation at normal top speed to keep the terrain racing
-    // beneath the player during the cartoon burst.
+    // Lift grows with speed, points through the flyer's local top, and is
+    // capped at the weight it carries. That cap is what makes level flight
+    // level. Under the uncapped square law this model used to use, matching
+    // gravity took 27 m/s while the aircraft tops out at 22.4, so it sank at
+    // every throttle setting — around 7 m/s of it at the default.
+    // A bank or a climb still costs height: the cap applies to lift along the
+    // wings, and tilting them is what shrinks its vertical share. Boost is
+    // likewise still about forward speed rather than launching vertically.
     const liftSpeed = Math.min(speed, this.maxAirspeed);
-    this.velocity.addScaledVector(this.up, liftSpeed * liftSpeed * 0.005 * delta);
-    this.velocity.y -= 3.7 * delta;
+    const lift = Math.min(liftSpeed * liftSpeed * LIFT_PER_SPEED_SQUARED, GRAVITY);
+    this.velocity.addScaledVector(this.up, lift * delta);
+    this.velocity.y -= GRAVITY * delta;
     this.velocity.clampLength(this.minAirspeed, isBoosting ? 73.5 : this.maxAirspeed);
 
     this.position.addScaledVector(this.velocity, delta);

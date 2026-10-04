@@ -42,8 +42,13 @@ from a CDN, so the first load needs an internet connection.
   engines meet it, so swapping airframes moves the plane onto the fire instead
   of dragging the fire to each new tail. The gun muzzles ride the same shift;
   left alone they would float out ahead of the wing.
-- The MiG is twin-engined, so the single flame sits between its two nozzles
-  rather than in one of them.
+- The MiG is twin-engined, so the afterburner draws one spout per pipe, at
+  x = +/-0.366, each flickering independently: two plumes beating in lockstep
+  read as one light behind the aircraft rather than as two engines.
+- Both the nozzle position and the seating are measured off the engine cans
+  alone. The fins and the stabilators reach further back than the pipes do, so
+  taking the rearmost geometry at face value puts the flames out on the fin
+  roots and seats the aircraft a fifth of a unit forward of where it belongs.
 - The prop plane's red UV retint is gone. It was applied to every mesh, which
   on a multi-material airframe would have painted the whole jet in one borrowed
   texture.
@@ -99,8 +104,17 @@ Three details are worth knowing before changing this code:
   just start listening on load, and why there is a tap-to-start overlay.
 
 Flight uses a small arcade fixed-wing model with rotational inertia, thrust, drag,
-lift, gravity, speed limits, and a target-airspeed throttle system. The current
-player speed envelope is 70% of the earlier tuning:
+lift, gravity, speed limits, and a target-airspeed throttle system.
+
+Lift is capped at the weight it carries, which is what makes hands-off level
+flight hold its altitude. Under the uncapped square law the model used to use,
+matching gravity took 27 m/s while the aircraft tops out at 22.4, so it sank at
+every throttle setting — around 7 m/s of it at the default. Below `FLYING_SPEED`
+the wings come up short and the aircraft settles, which keeps the throttle worth
+touching, and a bank or a climb still costs height because tilting the wings is
+what shrinks lift's vertical share.
+
+The current player speed envelope is 70% of the earlier tuning:
 
 - Normal airspeed: 5.6–22.4 m/s (about 20–81 km/h).
 - Boost top speed: 73.5 m/s (about 265 km/h).
