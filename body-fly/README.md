@@ -27,17 +27,25 @@ from a CDN, so the first load needs an internet connection.
 
 ## Player aircraft and camera
 
-- The player flies the F-16 in `assets/plane-model2`, keeping its own liveries
-  and materials. It replaced the earlier prop plane in `assets/plane-model`,
-  which is no longer loaded.
-- The model is authored nose-towards +Z, so it is turned 180 degrees to face the
-  -Z the game flies along. `PLANE_SCALE` sizes it by wingspan rather than
-  length: the jet is longer and narrower than the prop plane it replaced, and
-  matching span is what keeps its presence on screen familiar.
-- The gun muzzles sit at the same fraction of the wing half-span as before, so
-  they stayed on the wings across the swap rather than hanging past the tips.
+- The player flies the MiG-29 in `assets/plane-model3`, keeping its own liveries
+  and materials. It replaced the F-16 in `assets/plane-model2`, which replaced
+  the prop plane in `assets/plane-model`; neither is loaded now.
+- The model is authored nose-towards +X, so it is turned a quarter turn to face
+  the -Z the game flies along. `PLANE_SCALE` sizes it by wingspan rather than
+  length: a fighter is far longer than it is wide, and matching span is what
+  keeps its presence on screen familiar.
+- Gear-up and gear-down are both shipped as meshes and both draw by default,
+  which lands the aircraft with its wheels out and its bay doors shut at once.
+  The extended set is hidden by node name.
+- The flame is the fixed point, not the airframe. `afterburner.js` exports its
+  nozzle position and the aircraft is slid along Z by `PLANE_SEAT_Z` until its
+  engines meet it, so swapping airframes moves the plane onto the fire instead
+  of dragging the fire to each new tail. The gun muzzles ride the same shift;
+  left alone they would float out ahead of the wing.
+- The MiG is twin-engined, so the single flame sits between its two nozzles
+  rather than in one of them.
 - The prop plane's red UV retint is gone. It was applied to every mesh, which
-  on a 60-material airframe would have painted the whole jet in one borrowed
+  on a multi-material airframe would have painted the whole jet in one borrowed
   texture.
 - The propeller re-parenting code remains and is inert: it is guarded on a
   `Propeller` node, and a jet has none.
@@ -194,9 +202,10 @@ and bullet collision. Enemy planes are now the only targets, so the shared
 `lockedBoxTarget` variable is renamed `lockedTarget`. This also drops ~9 MB, most
 of it the crate `metallicRoughness` and `normal` textures.
 
-**2. Player aircraft swapped** to the F-16 in `assets/plane-model2`. The working
-copy still flies the prop plane from `assets/plane-model`. Note this is a 16.9 MB
-model — by far the largest thing the page loads.
+**2. Player aircraft swapped** to the MiG-29 in `assets/plane-model3`. The
+working copy still flies the prop plane from `assets/plane-model`. Only the
+compressed `mig-29.glb` is committed; the 30 MB source export it was built from
+is not.
 
 **3. Tilt controls added.** `src/mobile-controls.js`, the tap-to-start overlay,
 and the tap-the-plane-to-fire hit test exist only here.

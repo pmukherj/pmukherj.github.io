@@ -4,7 +4,7 @@ import { GameAudio } from './audio.js';
 import { FlightDynamics } from './flight-dynamics.js?v=flight-speed-70-1';
 import { createTerrain, terrainHeightAt, updateTerrainAround } from './terrain.js';
 import { TiltControls, supportsTilt, MIN_TAP_RADIUS } from './mobile-controls.js';
-import { Afterburner } from './afterburner.js';
+import { Afterburner, NOZZLE as FLAME } from './afterburner.js';
 import { TornadoField } from './tornadoes.js';
 
 const canvas = document.querySelector('#world');
@@ -131,26 +131,36 @@ scene.add(flyer);
 const afterburner = new Afterburner();
 flyer.add(afterburner.group);
 
-// Sized so the jet's wingspan reads much like the old prop plane's did from
-// the chase camera. It is a longer, narrower airframe, so matching span rather
-// than length is what keeps its on-screen presence familiar.
-const PLANE_SCALE = 0.45;
+// Sized so the jet's wingspan reads as the previous airframes did from the
+// chase camera. A fighter is far longer than it is wide, so matching span
+// rather than length is what keeps its presence on screen familiar.
+const PLANE_SCALE = 0.04;
+// How far back the engines exit, in the model's own units. The aircraft is slid
+// along Z until that point lands on the flame, so swapping airframes moves the
+// plane onto the fire rather than dragging the fire to a new tail.
+const PLANE_EXHAUST_Z = 44.09;
+const PLANE_SEAT_Z = FLAME.z - PLANE_EXHAUST_Z * PLANE_SCALE;
 const loader = new GLTFLoader();
 let planeModel;
 let propellerPivot;
 loader.load(
-  './assets/plane-model2/f-16_block_70_-_peruvian.glb',
+  './assets/plane-model3/mig-29.glb',
   (gltf) => {
     planeModel = gltf.scene;
-    // The model is authored nose-towards +Z; the game flies towards -Z.
-    planeModel.rotation.y = Math.PI;
+    // The model is authored nose-towards +X; the game flies towards -Z.
+    planeModel.rotation.y = Math.PI / 2;
     planeModel.scale.setScalar(PLANE_SCALE);
-    const modelBounds = new THREE.Box3().setFromObject(planeModel);
-    planeModel.position.y = -(modelBounds.min.y + modelBounds.max.y) / 2;
     planeModel.traverse((child) => {
       if (!child.isMesh) return;
       child.castShadow = true;
+      // Gear-up and gear-down are both shipped as meshes and both draw by
+      // default, which lands the aircraft with its wheels out and its bay
+      // doors shut at the same time. Keep the stowed set.
+      if (/landingOn/i.test(child.parent?.name ?? '')) child.visible = false;
     });
+    const modelBounds = new THREE.Box3().setFromObject(planeModel);
+    planeModel.position.y = -(modelBounds.min.y + modelBounds.max.y) / 2;
+    planeModel.position.z = PLANE_SEAT_Z;
     flyer.add(planeModel);
 
     // The exported Propeller parent is rooted at the plane origin, not the
@@ -224,12 +234,12 @@ const projectileMaterial = new THREE.MeshBasicMaterial({ color: 0xffef8b });
 const impactGeometry = new THREE.SphereGeometry(0.18, 10, 8);
 const impactMaterial = new THREE.MeshBasicMaterial({ color: 0xff7600 });
 const explosionGeometry = new THREE.SphereGeometry(1, 16, 12);
-// Set in from the wing roots, at the same fraction of the span the old plane's
-// guns sat at. The jet is the narrower airframe, so reusing its predecessor's
-// offsets would have hung the muzzles out past the wingtips.
+// Set in from the wing roots. The span is all but identical to the last jet's,
+// so the offsets carry over, but they ride the same seating shift as the
+// airframe: left alone they would float out ahead of the wing.
 const wingMuzzles = [
-  new THREE.Vector3(-1.05, -0.05, -0.6),
-  new THREE.Vector3(1.05, -0.05, -0.6),
+  new THREE.Vector3(-1.05, -0.05, -0.6 + PLANE_SEAT_Z),
+  new THREE.Vector3(1.05, -0.05, -0.6 + PLANE_SEAT_Z),
 ];
 const projectileDirection = new THREE.Vector3();
 const projectileUp = new THREE.Vector3(0, 1, 0);

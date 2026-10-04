@@ -7,10 +7,10 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.m
 // read as light rather than as plastic — the sky brightens through them — and
 // it is why the flame needs no lighting of its own.
 
-// Where the nozzle sits in the flyer's own space, measured from the model's
-// Afterburners mesh. The engine axis is below the model's vertical centre
-// because the centring includes the tall tail fin.
-const NOZZLE = { x: 0, y: -0.41, z: 2.8 };
+// Where the flame sits in the flyer's own space. This is the fixed point of the
+// aircraft: airframes are seated so their exhaust meets it, rather than the
+// flame being moved to each new tail.
+export const NOZZLE = { x: 0, y: -0.41, z: 2.8 };
 
 // Peak alpha matters more than colour here. Additive blending sums towards
 // white, so two bright cones stacked at full alpha bleach into a solid beam;
