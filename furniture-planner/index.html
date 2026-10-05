@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Furniture Planner</title>
+<style>
+:root{--bg:#f6f5f1;--panel:#fff;--ink:#1f2d33;--muted:#6b777c;--line:#e2e0da;--accent:#0f7c86;--wall:#253d46;--floor:#f3f1ea;--bad:#d1352b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+#app{display:grid;grid-template-columns:260px 1fr 280px;height:100vh}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow:auto;padding:14px}
+aside.right{border-right:0;border-left:1px solid var(--line)}
+h1{font-size:15px;margin:0 0 2px}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 6px}
+.sub{color:var(--muted);font-size:12px}
+.item{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer}
+.item:hover{background:#f1f0ec}.item.sel{background:#e3f1f2}
+.sw{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.2);flex:none}
+.item .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .dm{color:var(--muted);font-size:11px;flex:none}
+.item.bad .nm{color:var(--bad)}
+.item.off{opacity:.45}
+main{position:relative;overflow:hidden}
+svg{width:100%;height:100%;display:block;touch-action:none;user-select:none}
+.toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap}
+button,.btn{font:inherit;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 9px;cursor:pointer;color:var(--ink)}
+button:hover{border-color:#bbb}button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hud{position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:6px;padding:5px 9px;color:var(--muted);font-size:12px}
+label.f{display:flex;justify-content:space-between;align-items:center;margin:6px 0;gap:8px}
+label.f input[type=number]{width:90px;font:inherit;padding:3px 6px;border:1px solid var(--line);border-radius:5px}
+.thumbs img{width:100%;border-radius:6px;margin-bottom:6px;display:block}
+.note{color:var(--muted);font-size:12px;margin:6px 0}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.warn{color:var(--bad);font-size:12px;margin:6px 0}
+kbd{font:11px ui-monospace,Menlo,monospace;background:#f1f0ec;border:1px solid var(--line);border-radius:3px;padding:0 4px}
+.keys{line-height:1.9;color:var(--muted);font-size:12px}
+.label{font-size:.42px;fill:#1f2d33;pointer-events:none;font-weight:600}
+.label.light{fill:#fff}
+.dimtxt{font-size:.42px;fill:var(--accent);font-weight:600;pointer-events:none}
+.roomtxt{font-size:.6px;fill:#8a9499;pointer-events:none;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside>
+    <h1>Furniture planner</h1>
+    <div class="sub">Drag furniture from the staging area on the right side of the canvas onto the plan.</div>
+    <h2>Furniture</h2>
+    <div id="list"></div>
+    <h2>Keys</h2>
+    <div class="keys">
+      <kbd>R</kbd> rotate 90° &nbsp;<kbd>Shift</kbd>+<kbd>R</kbd> 15°<br>
+      <kbd>Arrows</kbd> nudge 1″ (<kbd>Shift</kbd> 6″)<br>
+      <kbd>D</kbd> duplicate &nbsp;<kbd>Del</kbd> remove copy / hide<br>
+      <kbd>M</kbd> measure tool &nbsp;<kbd>Esc</kbd> deselect<br>
+      Scroll to zoom · drag empty space to pan
+    </div>
+  </aside>
+  <main>
+    <svg id="svg"><defs>
+      <pattern id="grid" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e7e5de" stroke-width=".03"/></pattern>
+    </defs><g id="world"></g></svg>
+    <div class="toolbar">
+      <button id="snapBtn" class="on" title="Snap moves to 1 inch">Snap 1″</button>
+      <button id="measureBtn" title="Measure (M)">Measure</button>
+      <button id="fitBtn">Fit view</button>
+      <button id="exportBtn">Export layout</button>
+      <label class="btn">Import<input id="importIn" type="file" accept=".json" hidden></label>
+      <button id="resetBtn">Reset</button>
+    </div>
+    <div class="hud" id="hud">—</div>
+  </main>
+  <aside class="right" id="inspector"></aside>
+</div>
+<script>
+const PLAN = {"segments": [{"rect": [-0.6, -0.3, 0.0, 0.6]}, {"rect": [-0.6, 6.7, 0.0, 7.3]}, {"rect": [-0.6, 8.6, 0.0, 16.3]}, {"rect": [-0.6, 18.4, 0.0, 19.166666666666668]}, {"rect": [-0.3, 18.916666666666668, 0.4, 19.416666666666668]}, {"rect": [2.5, 18.916666666666668, 3.25, 19.416666666666668]}, {"rect": [3.0, 19.166666666666668, 3.5, 23.71666666666667]}, {"rect": [3.0, 27.21666666666667, 3.5, 31.633333333333336]}, {"rect": [3.25, 31.333333333333336, 29.5, 31.933333333333337]}, {"rect": [29.2, 28.6, 29.8, 31.633333333333336]}, {"rect": [29.5, 28.3, 32.2, 28.900000000000002]}, {"rect": [31.900000000000002, 19.166666666666668, 32.5, 28.6]}, {"rect": [31.8, 18.866666666666667, 32.2, 19.46666666666667]}, {"rect": [31.5, 14.75, 32.1, 15.25]}, {"rect": [31.5, 18.25, 32.1, 19.166666666666668]}, {"rect": [31.5, -0.3, 32.1, 14.75]}, {"rect": [-0.3, -0.6, 0.5, 0.0]}, {"rect": [2.1, -0.6, 6.9, 0.0]}, {"rect": [9.9, -0.6, 12.8, 0.0]}, {"rect": [15.8, -0.6, 24.7, 0.0]}, {"rect": [28.7, -0.6, 31.8, 0.0]}, {"rect": [3.25, 18.916666666666668, 14.4, 19.416666666666668]}, {"rect": [17.4, 18.916666666666668, 18, 19.416666666666668]}, {"rect": [14.833333, 25.25, 15.333333, 31.633333333333336]}, {"rect": [15.083333, 25.0, 15.4, 25.5]}, {"rect": [18.15, 25.0, 24.25, 25.5]}, {"rect": [24.0, 19.166666666666668, 24.5, 31.633333333333336]}, {"rect": [17.75, 19.166666666666668, 18.25, 22.0]}, {"rect": [17.75, 24.75, 18.25, 25.25]}, {"rect": [18, 18.916666666666668, 24.25, 19.416666666666668]}, {"rect": [24.25, 22.4, 24.6, 22.9]}, {"rect": [27.1, 22.4, 32.2, 22.9]}, {"rect": [28.25, 19.166666666666668, 28.75, 19.51666666666667]}, {"rect": [28.25, 22.2, 28.75, 22.65]}, {"rect": [28.5, 18.916666666666668, 32.2, 19.416666666666668]}, {"rect": [21.0, -0.3, 21.5, 11.75]}, {"rect": [21.0, 14.25, 21.5, 14.75]}, {"rect": [25.25, 14.5, 31.8, 15.0]}, {"rect": [25.0, 11.95, 25.5, 14.75]}, {"rect": [25.25, 11.75, 25.7, 12.25]}, {"rect": [31.1, 11.75, 31.8, 12.25]}, {"rect": [18.25, 11.9, 18.75, 14.75]}, {"rect": [18.5, 11.65, 21.25, 12.15]}, {"rect": [18.5, 14.5, 18.9, 15.0]}, {"rect": [20.85, 14.5, 21.25, 15.0]}], "openings": [{"rect": [-0.6, 0.6, 0.0, 6.7], "type": "window"}, {"rect": [-0.6, 7.3, 0.0, 8.6], "type": "window"}, {"rect": [-0.6, 16.3, 0.0, 18.4], "type": "window"}, {"rect": [0.4, 18.916666666666668, 2.5, 19.416666666666668], "type": "window"}, {"rect": [3.0, 23.71666666666667, 3.5, 27.21666666666667], "type": "window"}, {"rect": [31.5, 15.25, 32.1, 18.25], "type": "door"}, {"rect": [0.5, -0.6, 2.1, 0.0], "type": "window"}, {"rect": [6.9, -0.6, 9.9, 0.0], "type": "patio door"}, {"rect": [12.8, -0.6, 15.8, 0.0], "type": "window"}, {"rect": [24.7, -0.6, 28.7, 0.0], "type": "window"}, {"rect": [14.4, 18.916666666666668, 17.4, 19.416666666666668], "type": "door"}, {"rect": [15.4, 25.0, 18.15, 25.5], "type": "door"}, {"rect": [17.75, 22.0, 18.25, 24.75], "type": "door"}, {"rect": [24.6, 22.4, 27.1, 22.9], "type": "door"}, {"rect": [28.25, 19.51666666666667, 28.75, 22.2], "type": "bifold"}, {"rect": [21.0, 11.75, 21.5, 14.25], "type": "door"}, {"rect": [25.7, 11.75, 31.1, 12.25], "type": "sliding"}, {"rect": [18.9, 14.5, 20.85, 15.0], "type": "bifold"}], "outline": [[-0.6, -0.6], [32.1, -0.6], [32.1, 18.866666666666667], [32.5, 18.866666666666667], [32.5, 28.9], [29.8, 28.9], [29.8, 31.933333333333337], [3, 31.933333333333337], [3, 19.416666666666668], [-0.6, 19.416666666666668]], "patio": [[2, -0.6], [13.416666666666666, -0.6], [13.416666666666666, -10.1], [2, -10.1]], "rooms": [{"name": "Primary bedroom", "center": [9.16, 25.2], "dimensions": [11.333333333333334, 11.916666666666666], "photos": [9, 10]}, {"name": "Bedroom 2", "center": [26.5, 6], "dimensions": [10, 11.75], "photos": [3, 4, 5]}, {"name": "Living / dining", "center": [6, 12], "photos": [8, 13, 14, 15]}, {"name": "Kitchen", "center": [16, 5.4], "photos": [13, 14, 15]}, {"name": "Ensuite", "center": [19.6, 28.6], "photos": [11]}, {"name": "Walk-in closet", "center": [21.2, 22.0], "photos": [12]}, {"name": "Hall bathroom", "center": [28, 25.2], "photos": [7]}, {"name": "Laundry", "center": [30.5, 20.9], "photos": [6]}, {"name": "Entry hall", "center": [28, 17], "photos": [2]}, {"name": "Closet", "center": [28.5, 13.3], "photos": [5]}, {"name": "Storage", "center": [19.9, 13.3], "photos": [8]}, {"name": "Patio", "center": [7.7, -5.3], "dimensions": [11.416666666666666, 9.5], "photos": [16, 17]}], "fixtures": [{"name": "Kitchen counter east", "rect": [18.7, 0.05, 21, 11.5], "height": 3}, {"name": "Kitchen counter south", "rect": [11.9, 0.05, 18.7, 2.1], "height": 3}, {"name": "Kitchen island", "rect": [11.3, 6, 14.1, 11.5], "height": 3}]};
+const ITEMS = [{"id": "S1", "name": "Sloan sleeper sofa", "short": "Sloan sofa", "group": "Seating", "w": 79, "d": 36, "h": 35, "color": "#c4705a", "src": "From listing", "imgs": ["crops/sloan_sleeper_sofa.jpg", "crops/sloan_sleeper_sofa_2.jpg"], "notes": "Pull-out bed extends to ~89in deep, so leave about 53in clear in front to open it.", "shape": "rect", "kind": "solid", "dark": true, "front": true, "accent": null, "head": false}, {"id": "S2", "name": "Navy velvet sofa", "short": "Navy sofa", "group": "Seating", "w": 80, "d": 34, "h": 33, "color": "#1f2a55", "src": "Estimated from photos", "imgs": ["crops/navy_velvet_sofa_2.jpg"], "notes": "", "shape": "rect", "kind": "solid", "dark": true, "front": true, "accent": null, "head": false}, {"id": "S4", "name": "Jude recliner", "short": "Recliner", "group": "Seating", "w": 37.75, "d": 37, "h": 38.5, "color": "#a9b8bd", "src": "From listing", "imgs": ["crops/jude_recliner.jpg"], "notes": "Reclines to 62in deep, so leave ~25in behind/in front.", "shape": "rect", "kind": "solid", "dark": false, "front": true, "accent": null, "head": false}, {"id": "S6", "name": "Ghost chair", "short": "Ghost", "group": "Seating", "w": 21.25, "d": 21.75, "h": 37.5, "color": "#cfdde8", "src": "Standard spec", "imgs": ["crops/ghost_chair.jpg"], "notes": "", "shape": "rect", "kind": "solid", "dark": false, "front": true, "accent": null, "head": false}, {"id": "S7", "name": "Office chair", "short": "Chair", "group": "Seating", "w": 26, "d": 26, "h": 40, "color": "#4a4a4a", "src": "Estimated from photos", "imgs": ["crops/office_chair.jpg"], "notes": "", "shape": "round", "kind": "solid", "dark": true, "front": false, "accent": null, "head": false}, {"id": "T2", "name": "Standing desk", "short": "Desk", "group": "Tables & desks", "w": 48, "d": 24, "h": 29, "color": "#e9e9e6", "src": "Estimated from photos", "imgs": ["crops/standing_desk_white.jpg"], "notes": "", "shape": "rect", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "T4", "name": "Pink carved side table", "short": "Side tbl", "group": "Tables & desks", "w": 22, "d": 22, "h": 24, "color": "#c2186b", "src": "Estimated from photos", "imgs": ["crops/pink_carved_side_table.jpg"], "notes": "", "shape": "round", "kind": "solid", "dark": true, "front": false, "accent": null, "head": false}, {"id": "T5", "name": "Mirrored dressing table", "short": "Dressing table", "group": "Tables & desks", "w": 47.2, "d": 19.7, "h": 31.5, "color": "#c9ccd1", "src": "From listing", "imgs": ["crops/mirrored_dressing_table.jpg", "crops/mirrored_dressing_table_2.jpg"], "notes": "", "shape": "rect", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "ST1", "name": "Blue painted hutch", "short": "Hutch", "group": "Storage", "w": 44, "d": 18, "h": 76, "color": "#1f5f8b", "src": "Estimated from photos", "imgs": ["crops/blue_hutch.jpg", "crops/blue_hutch_2.jpg"], "notes": "Size estimated, so measure it.", "shape": "rect", "kind": "solid", "dark": true, "front": true, "accent": null, "head": false}, {"id": "ST2", "name": "Cube bookshelf (stack A)", "short": "Cubes A", "group": "Storage", "w": 40.5, "d": 12, "h": 54, "color": "#b9bcbf", "src": "Estimated from photos", "imgs": ["crops/grey_cube_bookshelves.jpg", "crops/grey_cube_bookshelves_2.jpg"], "notes": "Defaults to 3 cubes wide (13.5in each). Change the width to match how many cubes you put in a row.", "shape": "rect", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "ST2b", "name": "Cube bookshelf (stack B)", "short": "Cubes B", "group": "Storage", "w": 40.5, "d": 12, "h": 54, "color": "#b9bcbf", "src": "Estimated from photos", "imgs": ["crops/grey_cube_bookshelves.jpg"], "notes": "Defaults to 3 cubes wide (13.5in each).", "shape": "rect", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "ST3", "name": "White 2x2 cube storage", "short": "Kallax", "group": "Storage", "w": 30.3, "d": 15.4, "h": 30.3, "color": "#f2f0ea", "src": "Standard spec", "imgs": ["crops/white_cube_storage_2x2.jpg"], "notes": "", "shape": "rect", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "ST5", "name": "Teal rolling cart", "short": "Cart", "group": "Storage", "w": 13.75, "d": 17.75, "h": 30.75, "color": "#3aa79a", "src": "Standard spec", "imgs": ["crops/teal_rolling_carts.jpg"], "notes": "You have two (nightstands), so press D to duplicate.", "shape": "rect", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "ST7", "name": "Wood 2-tier console", "short": "Console", "group": "Storage", "w": 40, "d": 12, "h": 30, "color": "#d8b98a", "src": "Estimated from photos", "imgs": ["crops/wood_two_tier_console.jpg"], "notes": "", "shape": "rect", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "B1", "name": "King iron bed", "short": "King bed", "group": "Beds", "w": 79, "d": 86, "h": 50, "color": "#5d6268", "src": "Estimated from photos", "imgs": ["crops/iron_bed_frame.jpg", "crops/iron_bed_frame_2.jpg"], "notes": "Headboard is the thick dark edge.", "shape": "rect", "kind": "solid", "dark": true, "front": false, "accent": null, "head": true}, {"id": "B2", "name": "White crib", "short": "Crib", "group": "Beds", "w": 52, "d": 29, "h": 35, "color": "#f5f5f5", "src": "Estimated from photos", "imgs": ["crops/white_crib.jpg"], "notes": "", "shape": "rect", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "D3", "name": "TV on rolling stand", "short": "TV", "group": "Media & other", "w": 38, "d": 22, "h": 58, "color": "#8fd3bf", "src": "Estimated from photos", "imgs": ["crops/tv_rolling_stand.jpg"], "notes": "", "shape": "rect", "kind": "solid", "dark": false, "front": true, "accent": null, "head": false}, {"id": "D2", "name": "Kids' wooden piano", "short": "Piano", "group": "Media & other", "w": 26, "d": 14, "h": 20, "color": "#d9c49e", "src": "Estimated from photos", "imgs": ["crops/kids_wooden_piano.jpg"], "notes": "", "shape": "rect", "kind": "solid", "dark": false, "front": true, "accent": null, "head": false}, {"id": "L1", "name": "Brass 3-globe arc lamp", "short": "Brass lamp", "group": "Lighting", "w": 14, "d": 14, "h": 75, "color": "#c9a23a", "src": "Estimated from photos", "imgs": ["crops/brass_globe_arc_lamp.jpg"], "notes": "Footprint is the base only. The arms reach ~40in.", "shape": "round", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "L2", "name": "Chrome arc floor lamp", "short": "Arc lamp", "group": "Lighting", "w": 14, "d": 14, "h": 80, "color": "#9aa0a6", "src": "Estimated from photos", "imgs": ["crops/silver_arc_lamp.jpg"], "notes": "Footprint is the base only. The arm reaches ~60in.", "shape": "round", "kind": "solid", "dark": false, "front": false, "accent": null, "head": false}, {"id": "R1", "name": "Milano Peacock rug (8x10)", "short": "Peacock rug", "group": "Rugs", "w": 96.5, "d": 120, "h": 0.3, "color": "#3f9a9c", "src": "From listing", "imgs": ["crops/milano_peacock_rug.jpg", "crops/milano_peacock_rug_2.jpg"], "notes": "", "shape": "rect", "kind": "rug", "dark": false, "front": false, "accent": "#e9e6dc", "head": false}, {"id": "R2", "name": "Palm-leaf rug", "short": "Palm rug", "group": "Rugs", "w": 60, "d": 84, "h": 0.25, "color": "#9cc7a4", "src": "Estimated from photos", "imgs": ["crops/palm_leaf_rug.jpg"], "notes": "Size estimated (5x7).", "shape": "rect", "kind": "rug", "dark": false, "front": false, "accent": "#f0c6cf", "head": false}, {"id": "R3", "name": "Striped flatweave rug", "short": "Kilim rug", "group": "Rugs", "w": 48, "d": 72, "h": 0.25, "color": "#2a3557", "src": "Estimated from photos", "imgs": ["crops/kilim_stripe_rug.jpg"], "notes": "Size estimated (4x6).", "shape": "rect", "kind": "rug", "dark": true, "front": false, "accent": "#9fd3c1", "head": false}, {"id": "R4", "name": "Small Moroccan shag rug", "short": "Shag rug", "group": "Rugs", "w": 24, "d": 36, "h": 1, "color": "#ece6d6", "src": "Estimated from photos", "imgs": ["crops/moroccan_shag_rug.jpg"], "notes": "Size estimated (2x3).", "shape": "rect", "kind": "rug", "dark": false, "front": false, "accent": "#555", "head": false}];
+const IMG_BASE = "";
+const STORE = "fifthstreet-planner-v1";
+const NS = "http://www.w3.org/2000/svg";
+const $ = s => document.querySelector(s);
+const svg = $("#svg"), world = $("#world");
+const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const fmt = inches => { const s = inches < 0 ? "-" : ""; inches = Math.abs(Math.round(inches)); const f = Math.floor(inches / 12), i = inches % 12; return s + (f ? `${f}′${i ? ` ${i}″` : ""}` : `${i}″`); };
+
+// ---------- state ----------
+let state, sel = null, snap = true, measure = false, measureLine = null;
+function defaultState() {
+  // pack items into a staging area east of the plan
+  const out = []; let x = 35, y = 31, rowH = 0;
+  const sorted = [...ITEMS].sort((a, b) => (b.kind === "rug") - (a.kind === "rug") || b.d - a.d);
+  for (const it of sorted) {
+    const w = it.w / 12, d = it.d / 12;
+    if (x + w > 58) { x = 35; y -= rowH + 1; rowH = 0; }
+    out.push({ uid: it.id, ref: it.id, x: x + w / 2, y: y - d / 2, rot: 0, w: it.w, d: it.d, visible: true });
+    x += w + 1; rowH = Math.max(rowH, d);
+  }
+  return { items: out };
+}
+function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+const ref = p => ITEMS.find(i => i.id === p.ref);
+
+// ---------- geometry ----------
+function corners(p) {
+  const w = p.w / 24, d = p.d / 24, a = p.rot * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+  return [[-w, -d], [w, -d], [w, d], [-w, d]].map(([u, v]) => [p.x + u * c - v * s, p.y + u * s + v * c]);
+}
+function rectCorners([x0, y0, x1, y1]) { return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]; }
+function overlap(A, B) { // SAT on convex quads
+  for (const P of [A, B]) for (let i = 0; i < 4; i++) {
+    const [ax, ay] = P[i], [bx, by] = P[(i + 1) % 4], nx = ay - by, ny = bx - ax;
+    let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+    for (const [x, y] of A) { const t = x * nx + y * ny; a0 = Math.min(a0, t); a1 = Math.max(a1, t); }
+    for (const [x, y] of B) { const t = x * nx + y * ny; b0 = Math.min(b0, t); b1 = Math.max(b1, t); }
+    if (a1 <= b0 + 1e-3 || b1 <= a0 + 1e-3) return false;
+  }
+  return true;
+}
+const SOLIDS = [...PLAN.segments.map(s => rectCorners(s.rect)), ...PLAN.fixtures.map(f => rectCorners(f.rect))];
+function collisions() {
+  const bad = new Set(), vis = state.items.filter(p => p.visible && ref(p).kind !== "rug");
+  const C = new Map(vis.map(p => [p.uid, corners(p)]));
+  for (const p of vis) if (SOLIDS.some(s => overlap(C.get(p.uid), s))) bad.add(p.uid);
+  for (let i = 0; i < vis.length; i++) for (let j = i + 1; j < vis.length; j++)
+    if (overlap(C.get(vis[i].uid), C.get(vis[j].uid))) { bad.add(vis[i].uid); bad.add(vis[j].uid); }
+  return bad;
+}
+
+// ---------- static plan ----------
+const planG = el("g", {}, world), furnG = el("g", {}, world), toolG = el("g", {}, world);
+function drawPlan() {
+  el("rect", { x: -15, y: -45, width: 90, height: 70, fill: "url(#grid)" }, planG);
+  const pts = a => a.map(([x, y]) => `${x},${-y}`).join(" ");
+  el("polygon", { points: pts(PLAN.outline), fill: "var(--floor)" }, planG);
+  el("polygon", { points: pts(PLAN.patio), fill: "#e6ebe4", stroke: "#c9d3c6", "stroke-width": .05, "stroke-dasharray": ".3 .2" }, planG);
+  for (const f of PLAN.fixtures) { const [x0, y0, x1, y1] = f.rect; el("rect", { x: x0, y: -y1, width: x1 - x0, height: y1 - y0, fill: "#d6dfdc", stroke: "#b9c7c3", "stroke-width": .04 }, planG); }
+  for (const r of PLAN.rooms) {
+    const t = el("text", { x: r.center[0], y: -r.center[1], class: "roomtxt", "text-anchor": "middle" }, planG); t.textContent = r.name;
+    if (r.dimensions) { const t2 = el("text", { x: r.center[0], y: -r.center[1] + .7, class: "roomtxt", "text-anchor": "middle", style: "font-weight:400;text-transform:none" }, planG); t2.textContent = `${fmt(r.dimensions[0] * 12)} × ${fmt(r.dimensions[1] * 12)}`; }
+  }
+  for (const o of PLAN.openings) {
+    const [x0, y0, x1, y1] = o.rect, horiz = (x1 - x0) > (y1 - y0);
+    const col = o.type === "window" ? "#7fb6d6" : "#d58a3a";
+    if (horiz) el("line", { x1: x0, x2: x1, y1: -(y0 + y1) / 2, y2: -(y0 + y1) / 2, stroke: col, "stroke-width": o.type === "window" ? .12 : .08, "stroke-dasharray": o.type === "window" ? "" : ".25 .15" }, planG);
+    else el("line", { y1: -y0, y2: -y1, x1: (x0 + x1) / 2, x2: (x0 + x1) / 2, stroke: col, "stroke-width": o.type === "window" ? .12 : .08, "stroke-dasharray": o.type === "window" ? "" : ".25 .15" }, planG);
+  }
+  for (const s of PLAN.segments) { const [x0, y0, x1, y1] = s.rect; el("rect", { x: x0, y: -y1, width: x1 - x0, height: y1 - y0, fill: "var(--wall)" }, planG); }
+  const st = el("text", { x: 35, y: -32, class: "roomtxt", style: "font-size:.8px" }, planG); st.textContent = "Staging area";
+}
+
+// ---------- furniture ----------
+function drawFurniture() {
+  furnG.innerHTML = "";
+  const bad = collisions();
+  const vis = state.items.filter(p => p.visible).sort((a, b) => (ref(b).kind === "rug") - (ref(a).kind === "rug") || (a.uid === sel) - (b.uid === sel));
+  for (const p of vis) {
+    const it = ref(p), w = p.w / 12, d = p.d / 12, isSel = p.uid === sel, isBad = bad.has(p.uid);
+    const g = el("g", { transform: `translate(${p.x},${-p.y}) rotate(${-p.rot})`, style: "cursor:move" }, furnG);
+    g.dataset.uid = p.uid;
+    const attrs = { fill: it.color, "fill-opacity": it.kind === "rug" ? .75 : .92, stroke: isBad ? "var(--bad)" : isSel ? "var(--accent)" : "rgba(0,0,0,.45)", "stroke-width": isBad || isSel ? .09 : .03 };
+    if (it.shape === "round") el("ellipse", { cx: 0, cy: 0, rx: w / 2, ry: d / 2, ...attrs }, g);
+    else el("rect", { x: -w / 2, y: -d / 2, width: w, height: d, rx: it.kind === "rug" ? 0 : .08, ...attrs }, g);
+    if (it.accent) el("rect", { x: -w / 2 + .15, y: -d / 2 + .15, width: Math.max(0, w - .3), height: Math.max(0, d - .3), fill: "none", stroke: it.accent, "stroke-width": .12 }, g);
+    if (it.head) el("rect", { x: -w / 2, y: -d / 2, width: w, height: .25, fill: "#1d1d1d" }, g); // headboard
+    if (it.front) el("line", { x1: -w / 2 + .1, x2: w / 2 - .1, y1: d / 2 - .06, y2: d / 2 - .06, stroke: "rgba(255,255,255,.75)", "stroke-width": .1 }, g); // front edge marker
+    const short = it.short || it.name;
+    if (Math.max(w, d) > 1.6 || isSel) {
+      const t = el("text", { x: p.x, y: -p.y + .15, class: "label" + (it.dark ? " light" : ""), "text-anchor": "middle" }, furnG);
+      t.textContent = short;
+    }
+  }
+  if (sel) drawDims(state.items.find(p => p.uid === sel));
+  renderList(bad); renderInspector(bad); save();
+}
+function drawDims(p) {
+  if (!p || !p.visible) return;
+  const cs = corners(p), xs = cs.map(c => c[0]), ys = cs.map(c => c[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  // distance to nearest wall in 4 directions (axis-aligned scan against wall rects)
+  const segs = PLAN.segments.map(s => s.rect), ov = (a0, a1, b0, b1) => a0 < b1 && b0 < a1;
+  const ray = (dir) => {
+    let best = Infinity;
+    for (const [sx0, sy0, sx1, sy1] of segs) {
+      if (dir === "E" && ov(y0, y1, sy0, sy1) && sx0 >= x1 - 1e-3) best = Math.min(best, sx0 - x1);
+      if (dir === "W" && ov(y0, y1, sy0, sy1) && sx1 <= x0 + 1e-3) best = Math.min(best, x0 - sx1);
+      if (dir === "N" && ov(x0, x1, sx0, sx1) && sy0 >= y1 - 1e-3) best = Math.min(best, sy0 - y1);
+      if (dir === "S" && ov(x0, x1, sx0, sx1) && sy1 <= y0 + 1e-3) best = Math.min(best, y0 - sy1);
+    }
+    return best;
+  };
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const dims = { E: [x1, cy, 1, 0], W: [x0, cy, -1, 0], N: [cx, y1, 0, 1], S: [cx, y0, 0, -1] };
+  for (const k in dims) {
+    const dist = ray(k); if (!isFinite(dist) || dist > 20) continue;
+    const [sx, sy, dx, dy] = dims[k], ex = sx + dx * dist, ey = sy + dy * dist;
+    el("line", { x1: sx, y1: -sy, x2: ex, y2: -ey, stroke: "var(--accent)", "stroke-width": .03, "stroke-dasharray": ".12 .08", "pointer-events": "none" }, furnG);
+    const t = el("text", { x: (sx + ex) / 2 + (dy ? .12 : 0), y: -(sy + ey) / 2 - (dx ? .12 : 0), class: "dimtxt", "text-anchor": dy ? "start" : "middle" }, furnG);
+    t.textContent = fmt(dist * 12);
+  }
+}
+
+// ---------- side panels ----------
+function renderList(bad) {
+  const box = $("#list"); box.innerHTML = "";
+  const groups = {};
+  for (const p of state.items) (groups[ref(p).group] ||= []).push(p);
+  for (const g in groups) {
+    const h = document.createElement("div"); h.className = "sub"; h.style.margin = "8px 0 2px"; h.textContent = g; box.appendChild(h);
+    for (const p of groups[g]) {
+      const it = ref(p), d = document.createElement("div");
+      d.className = "item" + (p.uid === sel ? " sel" : "") + (bad.has(p.uid) ? " bad" : "") + (p.visible ? "" : " off");
+      d.innerHTML = `<span class="sw" style="background:${it.color}"></span><span class="nm"></span><span class="dm">${fmt(p.w)} × ${fmt(p.d)}</span>`;
+      d.querySelector(".nm").textContent = it.name + (p.uid !== p.ref ? " (copy)" : "");
+      d.onclick = () => { if (!p.visible) p.visible = true; select(p.uid); };
+      box.appendChild(d);
+    }
+  }
+}
+function renderInspector(bad) {
+  const box = $("#inspector"), p = state.items.find(q => q.uid === sel);
+  if (!p) { box.innerHTML = `<h2 style="margin-top:0">Selection</h2><div class="note">Click a piece of furniture to see its photo, size and clearances.</div><h2>Legend</h2><div class="note"><span style="color:#7fb6d6">━</span> window &nbsp; <span style="color:#d58a3a">┅</span> door / opening<br>Red outline = overlaps a wall, counter or other furniture (rugs excluded).<br>White edge on seating = the front.</div>`; return; }
+  const it = ref(p);
+  box.innerHTML = `
+    <h2 style="margin-top:0">${it.id}${p.uid !== p.ref ? " (copy)" : ""}</h2>
+    <div style="font-weight:600;font-size:14px;margin-bottom:6px"></div>
+    <div class="thumbs">${it.imgs.map(s => `<img src="${IMG_BASE + s}" alt="" onerror="this.remove()">`).join("")}</div>
+    ${bad.has(p.uid) ? `<div class="warn">Overlaps a wall, counter or another item.</div>` : ""}
+    <label class="f">Width (in)<input type="number" step="0.5" id="iw" value="${p.w}"></label>
+    <label class="f">Depth (in)<input type="number" step="0.5" id="id" value="${p.d}"></label>
+    <label class="f">Rotation (°)<input type="number" step="15" id="ir" value="${p.rot}"></label>
+    <div class="note">${fmt(p.w)} × ${fmt(p.d)} · ${(p.w * 2.54).toFixed(0)} × ${(p.d * 2.54).toFixed(0)} cm · ${it.src}</div>
+    <div class="row"><button id="bRot">Rotate 90°</button><button id="bDup">Duplicate</button><button id="bHide">${p.uid !== p.ref ? "Remove" : "Hide"}</button><button id="bDef">Default size</button></div>
+    <div class="note"></div>`;
+  box.querySelector("div[style]").textContent = it.name;
+  box.querySelector(".note:last-child").textContent = it.notes || "";
+  const num = (id, key) => box.querySelector(id).onchange = e => { const v = parseFloat(e.target.value); if (!isNaN(v) && (key === "rot" || v > 0)) { p[key] = key === "rot" ? ((v % 360) + 360) % 360 : v; drawFurniture(); } };
+  num("#iw", "w"); num("#id", "d"); num("#ir", "rot");
+  box.querySelector("#bRot").onclick = () => rotate(90);
+  box.querySelector("#bDup").onclick = duplicate;
+  box.querySelector("#bHide").onclick = removeSel;
+  box.querySelector("#bDef").onclick = () => { p.w = it.w; p.d = it.d; drawFurniture(); };
+}
+
+// ---------- actions ----------
+function select(uid) { sel = uid; drawFurniture(); }
+function rotate(deg) { const p = state.items.find(q => q.uid === sel); if (!p) return; p.rot = ((p.rot + deg) % 360 + 360) % 360; drawFurniture(); }
+function duplicate() {
+  const p = state.items.find(q => q.uid === sel); if (!p) return;
+  const n = { ...p, uid: p.ref + "-" + Date.now().toString(36), x: p.x + 1, y: p.y - 1 };
+  state.items.splice(state.items.indexOf(p) + 1, 0, n); select(n.uid);
+}
+function removeSel() {
+  const p = state.items.find(q => q.uid === sel); if (!p) return;
+  if (p.uid !== p.ref) state.items.splice(state.items.indexOf(p), 1); else p.visible = false;
+  sel = null; drawFurniture();
+}
+
+// ---------- view (pan / zoom) ----------
+let vb = { x: -3, y: -36, w: 64, h: 50 };
+const applyVB = () => svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+function fit() { const r = svg.getBoundingClientRect(), W = 64, H = 50, a = r.width / r.height; vb = a > W / H ? { w: H * a, h: H } : { w: W, h: W / a }; vb.x = -3 - (vb.w - W) / 2; vb.y = -36 - (vb.h - H) / 2; applyVB(); }
+function toWorld(e) { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const q = pt.matrixTransform(world.getScreenCTM().inverse()); return { x: q.x, y: -q.y }; }
+svg.addEventListener("wheel", e => {
+  e.preventDefault(); const k = Math.exp(e.deltaY * .0015), r = svg.getBoundingClientRect();
+  const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+  const nw = Math.min(200, Math.max(4, vb.w * k)), nh = vb.h * nw / vb.w;
+  vb.x += (vb.w - nw) * fx; vb.y += (vb.h - nh) * fy; vb.w = nw; vb.h = nh; applyVB();
+}, { passive: false });
+
+let drag = null;
+svg.addEventListener("pointerdown", e => {
+  const w = toWorld(e);
+  if (measure) { drag = { mode: "measure", x0: w.x, y0: w.y }; svg.setPointerCapture(e.pointerId); return; }
+  const g = e.target.closest("g[data-uid]");
+  if (g) {
+    const p = state.items.find(q => q.uid === g.dataset.uid); sel = p.uid;
+    drag = { mode: "move", p, dx: w.x - p.x, dy: w.y - p.y }; drawFurniture();
+  } else {
+    drag = { mode: "pan", cx: e.clientX, cy: e.clientY, vx: vb.x, vy: vb.y, moved: false };
+  }
+  svg.setPointerCapture(e.pointerId);
+});
+svg.addEventListener("pointermove", e => {
+  const w = toWorld(e);
+  $("#hud").textContent = `x ${fmt(w.x * 12)}  ·  y ${fmt(w.y * 12)}` + (measureLine ? `  ·  measured ${measureLine}` : "");
+  if (!drag) return;
+  if (drag.mode === "move") {
+    let x = w.x - drag.dx, y = w.y - drag.dy;
+    if (snap) { x = Math.round(x * 12) / 12; y = Math.round(y * 12) / 12; }
+    drag.p.x = x; drag.p.y = y; drawFurniture();
+  } else if (drag.mode === "pan") {
+    const r = svg.getBoundingClientRect(), s = vb.w / r.width;
+    vb.x = drag.vx - (e.clientX - drag.cx) * s; vb.y = drag.vy - (e.clientY - drag.cy) * s; drag.moved = true; applyVB();
+  } else if (drag.mode === "measure") {
+    toolG.innerHTML = "";
+    let x1 = w.x, y1 = w.y; if (e.shiftKey) { if (Math.abs(x1 - drag.x0) > Math.abs(y1 - drag.y0)) y1 = drag.y0; else x1 = drag.x0; }
+    const dist = Math.hypot(x1 - drag.x0, y1 - drag.y0) * 12;
+    el("line", { x1: drag.x0, y1: -drag.y0, x2: x1, y2: -y1, stroke: "#c2185b", "stroke-width": .05 }, toolG);
+    const t = el("text", { x: (drag.x0 + x1) / 2 + .15, y: -(drag.y0 + y1) / 2 - .15, class: "dimtxt", style: "fill:#c2185b;font-size:.55px" }, toolG);
+    measureLine = t.textContent = `${fmt(dist)} (${(dist * 2.54 / 100).toFixed(2)} m)`;
+  }
+});
+svg.addEventListener("pointerup", () => { if (drag && drag.mode === "pan" && !drag.moved && sel) { sel = null; drawFurniture(); } drag = null; });
+
+// ---------- keyboard ----------
+window.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  const p = state.items.find(q => q.uid === sel);
+  if (e.key === "Escape") { sel = null; setMeasure(false); drawFurniture(); return; }
+  if (e.key === "m" || e.key === "M") { setMeasure(!measure); return; }
+  if (!p) return;
+  const step = (e.shiftKey ? 6 : 1) / 12;
+  if (e.key === "r" || e.key === "R") rotate(e.shiftKey ? 15 : 90);
+  else if (e.key === "d" || e.key === "D") duplicate();
+  else if (e.key === "Delete" || e.key === "Backspace") removeSel();
+  else if (e.key === "ArrowLeft") { p.x -= step; drawFurniture(); }
+  else if (e.key === "ArrowRight") { p.x += step; drawFurniture(); }
+  else if (e.key === "ArrowUp") { p.y += step; drawFurniture(); }
+  else if (e.key === "ArrowDown") { p.y -= step; drawFurniture(); }
+  else return;
+  e.preventDefault();
+});
+function setMeasure(on) { measure = on; $("#measureBtn").classList.toggle("on", on); svg.style.cursor = on ? "crosshair" : ""; if (!on) { toolG.innerHTML = ""; measureLine = null; } }
+
+// ---------- toolbar ----------
+$("#snapBtn").onclick = e => { snap = !snap; e.target.classList.toggle("on", snap); };
+$("#measureBtn").onclick = () => setMeasure(!measure);
+$("#fitBtn").onclick = fit;
+$("#resetBtn").onclick = () => { if (confirm(shippedLayout ? "Discard your changes and go back to the saved layout?" : "Reset every item to the staging area?")) { state = shippedLayout ? layoutToState(shippedLayout) : defaultState(); sel = null; drawFurniture(); } };
+$("#exportBtn").onclick = () => {
+  const out = { units: "feet (plan coordinates, same as apartment-plan.json); sizes in inches", meters_per_unit: 0.3048,
+    items: state.items.map(p => ({ id: p.ref, visible: p.visible, uid: p.uid, name: ref(p).name, x_ft: +p.x.toFixed(4), y_ft: +p.y.toFixed(4), x_m: +(p.x * .3048).toFixed(4), y_m: +(p.y * .3048).toFixed(4), rotation_deg: p.rot, width_in: p.w, depth_in: p.d, height_in: ref(p).h })) };
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
+  a.download = "furniture-layout.json"; a.click(); URL.revokeObjectURL(a.href);
+};
+function layoutToState(d) {
+  const base = defaultState(); // items the file doesn't mention stay in the staging area
+  for (const q of d.items) {
+    if (!ITEMS.find(i => i.id === q.id)) continue;
+    let p = base.items.find(b => b.uid === q.uid);
+    if (!p) { p = { uid: q.uid, ref: q.id }; base.items.push(p); }
+    Object.assign(p, { x: q.x_ft, y: q.y_ft, rot: q.rotation_deg, w: q.width_in, d: q.depth_in, visible: q.visible !== false });
+  }
+  return base;
+}
+$("#importIn").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { state = layoutToState(JSON.parse(await f.text())); sel = null; drawFurniture(); }
+  catch (err) { alert("Could not read that layout file."); }
+  e.target.value = "";
+};
+
+// Saved default layout shipped next to the page (layout.json), used when this browser has nothing saved yet.
+let shippedLayout = null;
+async function start() {
+  try { const r = await fetch("layout.json", { cache: "no-cache" }); if (r.ok) shippedLayout = await r.json(); } catch (e) {}
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORE)); } catch (e) {}
+  state = saved && saved.items ? saved : shippedLayout ? layoutToState(shippedLayout) : defaultState();
+  // keep saved layouts in sync with the item catalogue
+  state.items = state.items.filter(p => ref(p));
+  for (const it of ITEMS) if (!state.items.some(p => p.ref === it.id)) state.items.push(defaultState().items.find(p => p.ref === it.id));
+  drawPlan(); fit(); drawFurniture();
+}
+start();
+window.addEventListener("resize", fit);
+</script>
+</body>
+</html>

@@ -39,6 +39,7 @@ jobs:
           cp -r ollie dist/ollie
           cp -r splitter dist/splitter
           cp -r body-fly dist/body-fly
+          cp -r furniture-planner dist/furniture-planner
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
