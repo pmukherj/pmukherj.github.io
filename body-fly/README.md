@@ -74,6 +74,35 @@ Keyboard:
 - `B`: four-second cartoon boost.
 - `Space`: fire guns.
 
+Gamepad (`src/gamepad-controls.js`), tested on a Logitech F710:
+
+- Left stick: pitch and roll.
+- Right stick: yaw (sideways) and throttle (up and down).
+- `LB` / `RB`: yaw, for anyone who would rather not fly the right stick in two
+  directions at once.
+- `RT`: fire. Held, it repeats at 8 shots a second; a trigger that fires once
+  per pull feels broken.
+- `B`: boost. `X`: hide the plane.
+
+The sticks follow the keyboard rather than flight-sim convention — pushing up
+pitches up, as the arrow keys do — and `INVERT_PITCH` in the module flips that.
+The pad adds to the keyboard rather than replacing it, so either can fly the
+aircraft. A radial deadzone per stick keeps a resting F710's drift from rolling
+the aircraft on its own.
+
+The Gamepad API has no button events, so the pad is polled once per frame from
+the render loop. Chrome remaps the F710 in DirectInput mode onto the standard
+layout, which is the primary path; a pad that arrives unmapped falls back to the
+raw DirectInput order, where the face buttons run X, A, B, Y rather than
+A, B, X, Y.
+
+On a Mac the pad must be in **DirectInput** mode: the `X`/`D` slider on its
+front edge set to `D`. In `X` (XInput) mode it enumerates as USB `046d:c21f`,
+macOS has no XInput driver, it never becomes a HID device at all, and no browser
+can see it. The switch is only read when the pad connects, so the receiver has
+to be unplugged and replugged after moving it; in `D` mode it enumerates as
+`046d:c219` and appears as `GamePad-1`.
+
 Phone and tablet (`src/mobile-controls.js`), on any device with a coarse
 pointer:
 
@@ -199,6 +228,7 @@ it changes.
 - `src/audio.js`: music, effects, and enemy spatial audio.
 - `src/mobile-controls.js`: device-orientation steering for phones and tablets.
 - `src/afterburner.js`: throttle-driven engine flame.
+- `src/gamepad-controls.js`: gamepad flying and its button bindings.
 - `src/tornadoes.js`: roaming fire tornadoes and their collision test.
 - `src/style.css`: game and HUD presentation.
 
